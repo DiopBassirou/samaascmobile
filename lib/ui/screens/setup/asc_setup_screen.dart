@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/asc_provider.dart';
+import '../../../providers/auth_provider.dart';
 import '../../../core/constants/app_routes.dart';
 
 class AscSetupScreen extends StatefulWidget {
@@ -12,23 +12,35 @@ class AscSetupScreen extends StatefulWidget {
 }
 
 class _AscSetupScreenState extends State<AscSetupScreen> {
-  final _joinFormKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
-  final _codeController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _codeController.text = 'TOP26'; // Préconfiguré pour Top Jeunesse
-  }
+  final _nomController = TextEditingController();
+  final _prenomController = TextEditingController();
+  final _telephoneController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   void _submitJoin() async {
-    if (_joinFormKey.currentState!.validate()) {
+    if (_formKey.currentState!.validate()) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final ascProvider = Provider.of<AscProvider>(context, listen: false);
+      
       try {
-        await Provider.of<AscProvider>(context, listen: false).joinAsc(_codeController.text);
-        if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.home);
+        // 1. Inscription + Connexion
+        await authProvider.register(
+          _nomController.text.trim(),
+          _prenomController.text.trim(),
+          _telephoneController.text.trim(),
+          _passwordController.text,
+        );
+        
+        // 2. Rejoindre Top Jeunesse (TOP26)
+        if (mounted) {
+          await ascProvider.joinAsc('TOP26');
+          if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.home);
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        String errorMessage = e.toString().replaceAll('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage, style: const TextStyle(color: Colors.white)), backgroundColor: Colors.red));
       }
     }
   }
@@ -66,24 +78,33 @@ class _AscSetupScreenState extends State<AscSetupScreen> {
                       children: [
                         const Icon(Icons.shield, size: 80, color: Colors.greenAccent),
                         const SizedBox(height: 20),
-                        const Text("Rejoindre votre ASC", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                        const Text("Inscription", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
-                        const Text("Top Jeunesse (Pré-configuré pour aujourd'hui)", style: TextStyle(color: Colors.greenAccent, fontSize: 16)),
+                        const Text("Rejoindre l'ASC Top Jeunesse", style: TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 40),
 
                         Form(
-                          key: _joinFormKey,
+                          key: _formKey,
                           child: Column(
                             children: [
-                              _buildField(_codeController, "Code de l'ASC", Icons.vpn_key),
+                              _buildField(_prenomController, "Prénom", Icons.person_outline),
+                              const SizedBox(height: 15),
+                              _buildField(_nomController, "Nom", Icons.person),
+                              const SizedBox(height: 15),
+                              _buildField(_telephoneController, "Téléphone", Icons.phone_android, keyboardType: TextInputType.phone),
+                              const SizedBox(height: 15),
+                              _buildField(_passwordController, "Mot de passe", Icons.lock_outline, isPassword: true),
                               const SizedBox(height: 30),
-                              provider.isLoading
+                              
+                              Consumer<AuthProvider>(
+                                builder: (context, auth, _) => (auth.isLoading || provider.isLoading)
                                   ? const CircularProgressIndicator(color: Colors.greenAccent)
                                   : ElevatedButton(
                                       style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent, minimumSize: const Size(double.infinity, 50)),
                                       onPressed: _submitJoin,
-                                      child: const Text("Rejoindre l'équipe", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                                      child: const Text("Créer mon compte et rejoindre", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
                                     )
+                              )
                             ],
                           ),
                         )
@@ -99,10 +120,11 @@ class _AscSetupScreenState extends State<AscSetupScreen> {
     );
   }
 
-  Widget _buildField(TextEditingController controller, String hint, IconData icon) {
+  Widget _buildField(TextEditingController controller, String hint, IconData icon, {bool isPassword = false, TextInputType? keyboardType}) {
     return TextFormField(
       controller: controller,
-      readOnly: true, // Empêche la modification du champ
+      obscureText: isPassword,
+      keyboardType: keyboardType,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,

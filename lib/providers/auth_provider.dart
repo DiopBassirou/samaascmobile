@@ -25,6 +25,33 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> register(String nom, String prenom, String telephone, String password) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final data = await _authService.register(nom, prenom, telephone, password);
+      
+      // Auto-login after registration if the API returns a token directly
+      if (data.containsKey('token')) {
+        _token = data['token'];
+        _user = data['user'];
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', _token!);
+      } else {
+        // If not, we just login manually
+        await login(telephone, password);
+      }
+      
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   Future<void> login(String telephone, String password) async {
     _isLoading = true;
     notifyListeners();
