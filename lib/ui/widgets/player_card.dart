@@ -19,23 +19,25 @@ class PlayerCard extends StatelessWidget {
   });
 
   Color get _positionColor {
-    switch (position.toLowerCase()) {
-      case 'gardien': return const Color(0xFFFF8F00);
-      case 'defenseur': case 'défenseur': return const Color(0xFF1565C0);
-      case 'milieu': return const Color(0xFF2E7D32);
-      case 'attaquant': return const Color(0xFFC62828);
-      default: return Colors.grey;
-    }
+    final lower = position.toLowerCase();
+    if (lower.contains('gardien') || lower == 'gk') return const Color(0xFFFF8F00);
+    if (lower.contains('défenseur') || lower.contains('defenseur') || lower.contains('latéral') || lower.contains('lateral') || lower.contains('libéro') || lower.contains('libero') || lower == 'dc' || lower == 'cb' || lower == 'lb' || lower == 'rb') return const Color(0xFF1976D2);
+    if (lower.contains('milieu') || lower.contains('le 6') || lower.contains('le 10') || lower == 'mc' || lower == 'cdm' || lower == 'cam') return const Color(0xFF2E7D32);
+    if (lower.contains('attaquant') || lower.contains('ailier') || lower.contains('avant-centre') || lower.contains('pointe') || lower == 'st' || lower == 'lw' || lower == 'rw') return const Color(0xFFC62828);
+    return Colors.grey;
   }
 
   IconData get _positionIcon {
-    switch (position.toLowerCase()) {
-      case 'gardien': return Icons.sports_handball;
-      case 'defenseur': case 'défenseur': return Icons.shield;
-      case 'milieu': return Icons.gps_fixed;
-      case 'attaquant': return Icons.flash_on;
-      default: return Icons.person;
-    }
+    final lower = position.toLowerCase();
+    if (lower.contains('gardien') || lower == 'gk') return Icons.sports_handball;
+    if (lower.contains('défenseur') || lower.contains('defenseur') || lower.contains('libéro') || lower.contains('libero') || lower == 'dc' || lower == 'cb') return Icons.shield;
+    if (lower.contains('latéral') || lower.contains('lateral') || lower == 'lb' || lower == 'rb') return Icons.shield;
+    if (lower.contains('milieu défensif') || lower.contains('le 6') || lower == 'cdm') return Icons.compare_arrows;
+    if (lower.contains('milieu offensif') || lower.contains('le 10') || lower == 'cam') return Icons.auto_awesome;
+    if (lower.contains('milieu') || lower == 'mc' || lower == 'cm') return Icons.gps_fixed;
+    if (lower.contains('ailier') || lower == 'lw' || lower == 'rw') return Icons.bolt;
+    if (lower.contains('attaquant') || lower.contains('avant-centre') || lower.contains('pointe') || lower == 'st') return Icons.flash_on;
+    return Icons.person;
   }
 
   Color get _statusColor {

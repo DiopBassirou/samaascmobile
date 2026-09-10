@@ -27,6 +27,44 @@ class AscService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getSuperAdminAscs() async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/superadmin/ascs'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception('Impossible de charger les équipes super admin');
+    }
+  }
+
+  Future<Map<String, dynamic>> createSuperAdminAsc(String nom, String zone) async {
+    final token = await _getToken();
+    final response = await http.post(
+      Uri.parse('$_baseUrl/superadmin/ascs'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'nom': nom,
+        'zone': zone,
+      }),
+    );
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Erreur lors de la création de l\'ASC');
+    }
+  }
+
   Future<Map<String, dynamic>> createAsc(String nom, String ville, String zone, File? recepisse) async {
     final token = await _getToken();
     var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl${ApiRoutes.ascCreate}'));

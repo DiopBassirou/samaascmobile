@@ -4,6 +4,7 @@ import '../../../providers/match_provider.dart';
 import '../../../providers/news_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../ui/widgets/match_timer.dart';
+import '../../widgets/team_logo.dart';
 
 class SupporterHomeTab extends StatefulWidget {
   const SupporterHomeTab({super.key});
@@ -36,6 +37,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
         final isLive = currentMatch != null;
         final isNext = currentMatch == null && nextMatch != null;
         final news = newsProvider.news.isNotEmpty ? newsProvider.news.first : null;
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -73,7 +75,37 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
               ],
 
               // === Carte du Match Principal ===
+              if (matchToDisplay == null) ...[
+                // Pas de matchs
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(30),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.sports_soccer, size: 50, color: Colors.grey[300]),
+                      const SizedBox(height: 12),
+                      const Text('Aucun match programmé', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 4),
+                      Text('Les prochains matchs apparaîtront ici.', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
               if (matchToDisplay != null) ...[
+                Text(
+                  matchToDisplay.isToday ? "Match d'Aujourd'hui" 
+                  : matchToDisplay.isYesterday ? "Match d'Hier" 
+                  : matchToDisplay.isTomorrow ? "Match de Demain" 
+                  : "Match du ${_formatDate(matchToDisplay.dateMatch)}",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF0A5C36)),
+                ),
+                const SizedBox(height: 10),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
@@ -125,7 +157,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
                               color: matchToDisplay.categorie == 'CADET'
-                                  ? const Color(0xFF1565C0)
+                                  ? const Color(0xFF0F8A4B)
                                   : Colors.white.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -142,7 +174,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildTeam('Notre ASC', Colors.greenAccent),
+                          _buildTeam(authProvider.user?['asc']?['nom'] ?? 'Notre ASC', Colors.greenAccent, logoUrl: authProvider.user?['asc']?['logo_url']),
                           if (isNext)
                             const Text('VS', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold))
                           else
@@ -150,7 +182,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                               '${matchToDisplay.scoreAsc ?? 0} - ${matchToDisplay.scoreAdv ?? 0}',
                               style: const TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.bold),
                             ),
-                          _buildTeam(matchToDisplay.opponentName, Colors.blueAccent),
+                          _buildTeam(matchToDisplay.opponentName, Colors.green),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -169,7 +201,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                         children: [
                           if (matchToDisplay.pouleName != null)
                             _buildInfoChip(Icons.emoji_events_outlined, matchToDisplay.pouleName!),
-                          if (matchToDisplay.phase != null)
+                          if (matchToDisplay.phase != null && matchToDisplay.phase != matchToDisplay.pouleName)
                             _buildInfoChip(Icons.workspaces_outline, matchToDisplay.phase!),
                           if (matchToDisplay.lieu != null && matchToDisplay.lieu!.isNotEmpty)
                             _buildInfoChip(Icons.location_on_outlined, matchToDisplay.lieu!),
@@ -194,8 +226,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
               // Fil du Match (Timeline d'événements)
               if (matchToDisplay != null &&
                   (matchToDisplay.statut == 'EN_COURS' ||
-                      matchToDisplay.statut == 'MI_TEMPS' ||
-                      matchToDisplay.statut == 'TERMINE')) ...[
+                      matchToDisplay.statut == 'MI_TEMPS')) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -373,21 +404,18 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
     );
   }
 
-  static Widget _buildTeam(String name, Color color) {
+  static Widget _buildTeam(String name, Color color, {String? logoUrl}) {
     return Column(
       children: [
-        Container(
-          width: 52, height: 52,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.2),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
-          ),
-          child: Center(child: Icon(Icons.circle, color: color, size: 18)),
+        TeamLogo(
+          teamName: name,
+          logoUrl: logoUrl,
+          fallbackColor: color,
+          size: 52,
         ),
         const SizedBox(height: 5),
         SizedBox(
-          width: 80,
+          width: 110,
           child: Text(name, style: const TextStyle(color: Colors.white, fontSize: 11), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
         ),
       ],

@@ -27,7 +27,7 @@ class _ConvocationScreenState extends State<ConvocationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('🔔 Notification envoyée : Le 11 de départ est publié !'),
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: Colors.green,
             duration: Duration(seconds: 4),
           ),
         );

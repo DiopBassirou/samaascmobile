@@ -30,6 +30,15 @@ class BureauProvider with ChangeNotifier {
     }
   }
 
+  Future<List<dynamic>> searchUsers(AuthProvider authProvider, String query) async {
+    if (authProvider.token == null) return [];
+    try {
+      return await _bureauService.searchUsers(authProvider.token!, query);
+    } catch (e) {
+      return [];
+    }
+  }
+
   Future<void> assignRole(AuthProvider authProvider, String search, int roleId) async {
     if (authProvider.token == null) return;
     

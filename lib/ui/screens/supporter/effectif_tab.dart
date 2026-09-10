@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/player_provider.dart';
 import '../../../models/player_model.dart';
 import '../../widgets/player_card.dart';
+import '../../widgets/tactical_pitch_widget.dart';
 import '../../../providers/auth_provider.dart';
 
 class EffectifTab extends StatefulWidget {
@@ -45,12 +46,17 @@ class _EffectifTabState extends State<EffectifTab> {
           default: playersToDisplay = List.from(provider.players);
         }
 
-        // Sort players by position
+        // Sort players by position category
         playersToDisplay.sort((a, b) {
-          final order = {'Gardien': 1, 'Défenseur': 2, 'Milieu': 3, 'Attaquant': 4};
-          final posA = order[a.poste] ?? 99;
-          final posB = order[b.poste] ?? 99;
-          return posA.compareTo(posB);
+          int _categoryOrder(String poste) {
+            final lower = poste.toLowerCase();
+            if (lower.contains('gardien') || lower == 'gk') return 1;
+            if (lower.contains('défenseur') || lower.contains('defenseur') || lower.contains('latéral') || lower.contains('lateral') || lower.contains('libéro') || lower.contains('libero')) return 2;
+            if (lower.contains('milieu') || lower.contains('le 6') || lower.contains('le 10')) return 3;
+            if (lower.contains('attaquant') || lower.contains('ailier') || lower.contains('avant-centre') || lower.contains('pointe')) return 4;
+            return 99;
+          }
+          return _categoryOrder(a.poste).compareTo(_categoryOrder(b.poste));
         });
 
         return SingleChildScrollView(
@@ -103,8 +109,12 @@ class _EffectifTabState extends State<EffectifTab> {
                 ),
               ),
               const SizedBox(height: 16),
-              
-              // Section label removed as per user request
+
+              // If XI de Départ tab is selected, show BeSoccer Tactical Pitch
+              if (_selectedTab == 1) ...[
+                TacticalPitchWidget(titulaires: titulaires),
+                const SizedBox(height: 16),
+              ],
 
               if (playersToDisplay.isEmpty)
                 Center(

@@ -81,7 +81,7 @@ class MatchGame {
       hommeDuMatch: json['homme_du_match'],
       opponentName: json['opponent'] != null
           ? (json['opponent']['nom_equipe'] ?? 'Adversaire')
-          : 'Adversaire',
+          : (json['adversaire_nom'] ?? 'Adversaire'),
       events: parsedEvents,
       startedAt: json['started_at'] != null ? DateTime.parse(json['started_at']) : null,
       secondHalfStartedAt: json['second_half_started_at'] != null
@@ -90,7 +90,7 @@ class MatchGame {
       categorie: json['categorie'] ?? 'SENIOR',
       lieu: json['lieu'],
       phase: json['phase'],
-      pouleName: json['opponent']?['poule']?['nom'],
+      pouleName: json['opponent']?['poule']?['nom'] ?? json['phase'],
     );
   }
 

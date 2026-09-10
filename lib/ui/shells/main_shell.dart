@@ -11,6 +11,7 @@ import 'package:sama_asc_mobile/providers/bureau_provider.dart';
 import 'package:sama_asc_mobile/providers/asc_provider.dart';
 import 'package:sama_asc_mobile/ui/screens/supporter/classement_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/supporter/noter_tab.dart';
+import 'package:sama_asc_mobile/ui/screens/superadmin/asc_list_tab.dart';
 import 'package:sama_asc_mobile/ui/widgets/role_header.dart';
 
 // Supporter tabs
@@ -26,12 +27,12 @@ import 'package:sama_asc_mobile/ui/screens/tresorier/pdf_tab.dart';
 // COM tabs
 import 'package:sama_asc_mobile/ui/screens/com/live_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/com/effectif_com_tab.dart';
-import 'package:sama_asc_mobile/ui/screens/com/classement_com_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/com/annonces_tab.dart';
 
 // President tabs
 import 'package:sama_asc_mobile/ui/screens/president/bureau_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/president/parametres_tab.dart';
+import 'package:sama_asc_mobile/ui/screens/admin/poules_admin_tab.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -68,6 +69,7 @@ class _MainShellState extends State<MainShell> {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
     final financeProvider = Provider.of<FinanceProvider>(context);
+    final bureauProvider = Provider.of<BureauProvider>(context);
     
     // Empêcher l'affichage de la page par défaut lors de la déconnexion
     if (user == null) {
@@ -80,7 +82,7 @@ class _MainShellState extends State<MainShell> {
     final String nom = user['nom'] ?? '';
     final String roleName = user['role']?['nom'] ?? 'Supporter';
 
-    final config = _getRoleConfig(roleName, context, financeProvider);
+    final config = _getRoleConfig(roleName, context, financeProvider, bureauProvider);
     final tabs = config['tabs'] as List<Widget>;
     final navItems = config['navItems'] as List<BottomNavigationBarItem>;
     final primaryColor = config['primaryColor'] as Color;
@@ -136,13 +138,36 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  Map<String, dynamic> _getRoleConfig(String role, BuildContext context, FinanceProvider financeProvider) {
+  Map<String, dynamic> _getRoleConfig(String role, BuildContext context, FinanceProvider financeProvider, BureauProvider bureauProvider) {
     final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
     final matchProvider = Provider.of<MatchProvider>(context, listen: false);
 
     final String effectifCount = playerProvider.players.length.toString();
 
     switch (role.toLowerCase()) {
+      case 'admin':
+      case 'super admin':
+      case 'superadmin':
+      case 'super_admin':
+        return {
+          'primaryColor': const Color(0xFF1B0000), // Rouge sombre / Noir
+          'badgeColor': const Color(0xFF7B0000), // Rouge vif
+          'roleIcon': Icons.admin_panel_settings,
+          'roleLabel': 'Super Admin',
+          'stats': const [
+            StatCardData(label: 'ASC GLOBALES', value: 'Zones'),
+            StatCardData(label: 'PARAMÈTRES', value: 'Système'),
+          ],
+          'tabs': const [
+            AscListTab(),
+            PoulesAdminTab(),
+          ],
+          'navItems': const [
+            BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'Gestion ASC'),
+            BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Poules'),
+          ],
+        };
+
       case 'entraineur':
         return {
           'primaryColor': const Color(0xFF0A5C36),
@@ -155,14 +180,10 @@ class _MainShellState extends State<MainShell> {
           ],
           'tabs': const [
             EffectifTab(),
-            // TactiqueTab(),
-            // StatsEquipeTab(),
             AnnoncesTab(),
           ],
           'navItems': const [
             BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Effectif'),
-            BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Tactique'),
-            BottomNavigationBarItem(icon: Icon(Icons.analytics), label: 'Stats'),
             BottomNavigationBarItem(icon: Icon(Icons.campaign), label: 'Annonces'),
           ],
         };
@@ -199,7 +220,9 @@ class _MainShellState extends State<MainShell> {
           ],
         };
 
+      case 'charge de communication':
       case 'charge_com':
+      case 'charge_de_com':
         return {
           'primaryColor': const Color(0xFF0A5C36),
           'badgeColor': const Color(0xFF0F8A4B),
@@ -217,7 +240,7 @@ class _MainShellState extends State<MainShell> {
           'tabs': const [
             LiveTab(),
             EffectifComTab(),
-            ClassementComTab(),
+            ClassementTab(),
             AnnoncesTab(),
             CotiserTab(),
           ],
@@ -268,9 +291,9 @@ class _MainShellState extends State<MainShell> {
           'badgeColor': const Color(0xFFFFC107),
           'roleIcon': Icons.workspace_premium,
           'roleLabel': 'Président',
-          'stats': const [
-            StatCardData(label: 'MEMBRES BUREAU', value: '5'), // Bientôt dynamique
-            StatCardData(label: 'SUPPORTERS', value: '64'),
+          'stats': [
+            StatCardData(label: 'MEMBRES BUREAU', value: '${bureauProvider.members.length}'),
+            StatCardData(label: 'JOUEURS', value: effectifCount),
           ],
           'tabs': const [
             BureauTab(),
@@ -295,9 +318,17 @@ class _MainShellState extends State<MainShell> {
           'roleIcon': Icons.person,
           'roleLabel': 'Utilisateur',
           'stats': <StatCardData>[],
-          'tabs': const [SupporterHomeTab(), SupporterHomeTab()],
+          'tabs': const [
+            SupporterHomeTab(),
+            EffectifTab(),
+            ClassementTab(),
+            CotiserTab(),
+          ],
           'navItems': const [
             BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Accueil'),
+            BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Effectif'),
+            BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Classement'),
+            BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Cotiser'),
           ],
         };
     }

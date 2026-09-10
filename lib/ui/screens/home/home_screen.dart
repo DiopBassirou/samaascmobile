@@ -87,7 +87,7 @@ class HomeScreen extends StatelessWidget {
         title: 'Classement & RÃ©sultats',
         subtitle: 'Suivez le championnat en direct',
         icon: Icons.emoji_events,
-        iconColor: Colors.blueAccent,
+        iconColor: Colors.green,
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StandingsScreen())),
       ),
     );
@@ -212,7 +212,7 @@ class HomeScreen extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Ce module est en cours de dÃ©veloppement 🚀'),
-        backgroundColor: Colors.blueGrey,
+        backgroundColor: Colors.green,
       ),
     );
   }

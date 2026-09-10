@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sama_asc_mobile/providers/asc_provider.dart';
+import 'package:sama_asc_mobile/ui/screens/president/bureau_tab.dart';
 
 class ParametresTab extends StatefulWidget {
   const ParametresTab({super.key});
@@ -69,9 +70,12 @@ class _ParametresTabState extends State<ParametresTab> {
               _buildSetting(
                 icon: Icons.person_add,
                 title: 'Gestion des rôles',
-                subtitle: 'Gérer depuis l\'onglet "Bureau"',
+                subtitle: 'Gérer les membres du bureau',
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Allez dans l\'onglet "Bureau" pour gérer les rôles.')));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => Scaffold(
+                    appBar: AppBar(title: const Text('Gestion des rôles'), backgroundColor: const Color(0xFF0A5C36), foregroundColor: Colors.white),
+                    body: const BureauTab(),
+                  )));
                 },
               ),
             ],

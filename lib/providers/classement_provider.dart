@@ -5,11 +5,22 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'auth_provider.dart';
 
 class ClassementProvider with ChangeNotifier {
-  List<dynamic> _teams = [];
+  Map<String, dynamic> _zonesData = {};
   bool _isLoading = false;
 
-  List<dynamic> get teams => _teams;
+  // All matches data (BeSoccer style)
+  List<dynamic> _allMatchDates = [];
+  List<String> _availableZones = [];
+  List<String> _availableCategories = ['SENIOR', 'CADET'];
+  bool _isLoadingMatches = false;
+
+  Map<String, dynamic> get zonesData => _zonesData;
   bool get isLoading => _isLoading;
+
+  List<dynamic> get allMatchDates => _allMatchDates;
+  List<String> get availableZones => _availableZones;
+  List<String> get availableCategories => _availableCategories;
+  bool get isLoadingMatches => _isLoadingMatches;
 
   Future<void> fetchClassement(AuthProvider authProvider) async {
     final token = authProvider.token;
@@ -19,19 +30,52 @@ class ClassementProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final apiUrl = dotenv.env['API_URL'] ?? 'http://127.0.0.1:8000/api';
+      final apiUrl = dotenv.env['API_BASE_URL'] ?? 'http://127.0.0.1:8000/api';
       final response = await http.get(
         Uri.parse('$apiUrl/classement'),
         headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       );
 
       if (response.statusCode == 200) {
-        _teams = json.decode(response.body);
+        _zonesData = json.decode(response.body);
       }
     } catch (e) {
       debugPrint('Error fetching classement: $e');
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchAllMatches(AuthProvider authProvider, {String? zone, String? categorie}) async {
+    final token = authProvider.token;
+    if (token == null) return;
+
+    _isLoadingMatches = true;
+    notifyListeners();
+
+    try {
+      final apiUrl = dotenv.env['API_BASE_URL'] ?? 'http://127.0.0.1:8000/api';
+      final params = <String, String>{};
+      if (zone != null && zone.isNotEmpty) params['zone'] = zone;
+      if (categorie != null && categorie.isNotEmpty) params['categorie'] = categorie;
+
+      final uri = Uri.parse('$apiUrl/all-matches').replace(queryParameters: params.isNotEmpty ? params : null);
+      final response = await http.get(
+        uri,
+        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        _allMatchDates = data['dates'] ?? [];
+        _availableZones = List<String>.from(data['zones'] ?? []);
+        _availableCategories = List<String>.from(data['categories'] ?? ['SENIOR', 'CADET']);
+      }
+    } catch (e) {
+      debugPrint('Error fetching all matches: $e');
+    } finally {
+      _isLoadingMatches = false;
       notifyListeners();
     }
   }

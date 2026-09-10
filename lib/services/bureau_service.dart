@@ -21,6 +21,22 @@ class BureauService {
     }
   }
 
+  Future<List<dynamic>> searchUsers(String token, String query) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/bureau/search?q=$query'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Erreur lors de la recherche des utilisateurs');
+    }
+  }
+
   Future<Map<String, dynamic>> assignRole(String token, String search, int roleId) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/bureau/assign'),

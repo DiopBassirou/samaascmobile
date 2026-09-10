@@ -85,7 +85,7 @@ class NoterTab extends StatelessWidget {
                     Text(
                       lastMatch != null
                           ? 'Notre ASC vs ${lastMatch.opponentName}'
-                          : 'Notre ASC vs Adversaire',
+                          : 'Aucun match terminé',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 20,
@@ -103,35 +103,37 @@ class NoterTab extends StatelessWidget {
                       child: Text(
                         lastMatch != null
                             ? 'Score : ${lastMatch.scoreAsc ?? 0} - ${lastMatch.scoreAdv ?? 0}'
-                            : 'Score : 2 - 1',
+                            : 'Score : --',
                         style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PlayerRatingScreen(matchId: matchId),
+                    if (lastMatch != null) ...[
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PlayerRatingScreen(matchId: matchId),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F8A4B),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F8A4B), // Remplacé amber
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          elevation: 4,
                         ),
-                        elevation: 4,
+                        icon: const Icon(Icons.rate_review_rounded, color: Colors.white),
+                        label: const Text(
+                          'NOTER CE MATCH',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
                       ),
-                      icon: const Icon(Icons.rate_review_rounded, color: Colors.white),
-                      label: const Text(
-                        'NOTER CE MATCH',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                    ),
+                    ],
                   ],
                 ),
               ),
