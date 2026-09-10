@@ -33,6 +33,7 @@ import 'package:sama_asc_mobile/ui/screens/com/annonces_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/president/bureau_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/president/parametres_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/admin/poules_admin_tab.dart';
+import 'package:sama_asc_mobile/ui/screens/superadmin/superadmin_matches_tab.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -150,8 +151,8 @@ class _MainShellState extends State<MainShell> {
       case 'superadmin':
       case 'super_admin':
         return {
-          'primaryColor': const Color(0xFF1B0000), // Rouge sombre / Noir
-          'badgeColor': const Color(0xFF7B0000), // Rouge vif
+          'primaryColor': const Color(0xFF0A5C36), // Vert sombre
+          'badgeColor': const Color(0xFF0F8A4B), // Vert clair
           'roleIcon': Icons.admin_panel_settings,
           'roleLabel': 'Super Admin',
           'stats': const [
@@ -160,10 +161,12 @@ class _MainShellState extends State<MainShell> {
           ],
           'tabs': const [
             AscListTab(),
+            SuperAdminMatchesTab(),
             PoulesAdminTab(),
           ],
           'navItems': const [
             BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'Gestion ASC'),
+            BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Matchs'),
             BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Poules'),
           ],
         };
@@ -234,7 +237,7 @@ class _MainShellState extends State<MainShell> {
               label: 'MATCH', 
               value: matchProvider.currentMatch != null 
                   ? 'En cours ⚡' 
-                  : (matchProvider.nextMatch != null ? matchProvider.nextMatch!.opponentName : 'Aucun')
+                  : (matchProvider.nextMatch != null ? matchProvider.nextMatch!.teamBName : 'Aucun')
             ),
           ],
           'tabs': const [
@@ -265,7 +268,7 @@ class _MainShellState extends State<MainShell> {
             StatCardData(
               label: 'PROCHAIN MATCH', 
               value: matchProvider.nextMatch != null 
-                  ? matchProvider.nextMatch!.opponentName 
+                  ? matchProvider.nextMatch!.teamBName 
                   : (matchProvider.currentMatch != null ? 'EN COURS' : 'Aucun')
             ),
           ],

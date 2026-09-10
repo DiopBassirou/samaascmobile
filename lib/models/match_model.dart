@@ -38,7 +38,10 @@ class MatchGame {
   final int? scoreAdv;
   final String statut; // A_VENIR, EN_COURS, MI_TEMPS, TERMINE
   final String? hommeDuMatch;
-  final String opponentName;
+  final String teamAName;
+  final String? teamALogo;
+  final String teamBName;
+  final String? teamBLogo;
   final List<MatchEvent> events;
   final DateTime? startedAt;
   final DateTime? secondHalfStartedAt;
@@ -57,7 +60,10 @@ class MatchGame {
     this.scoreAdv,
     required this.statut,
     this.hommeDuMatch,
-    this.opponentName = 'Adversaire',
+    this.teamAName = 'Equipe A',
+    this.teamALogo,
+    this.teamBName = 'Equipe B',
+    this.teamBLogo,
     this.events = const [],
     this.startedAt,
     this.secondHalfStartedAt,
@@ -79,9 +85,10 @@ class MatchGame {
       scoreAdv: json['score_adv'],
       statut: json['statut'] ?? 'A_VENIR',
       hommeDuMatch: json['homme_du_match'],
-      opponentName: json['opponent'] != null
-          ? (json['opponent']['nom_equipe'] ?? 'Adversaire')
-          : (json['adversaire_nom'] ?? 'Adversaire'),
+      teamAName: json['team_a_name'] ?? 'Equipe A',
+      teamALogo: json['team_a_logo'],
+      teamBName: json['team_b_name'] ?? 'Equipe B',
+      teamBLogo: json['team_b_logo'],
       events: parsedEvents,
       startedAt: json['started_at'] != null ? DateTime.parse(json['started_at']) : null,
       secondHalfStartedAt: json['second_half_started_at'] != null

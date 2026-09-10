@@ -91,8 +91,14 @@ class MatchCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildTeam('Notre ASC', Colors.greenAccent),
-              if (isNext)
+              _buildTeam(match.teamAName, Colors.greenAccent),
+              if (isLive)
+                const Text('EN COURS',
+                    style: TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold))
+              else if (isNext)
                 const Text('VS',
                     style: TextStyle(
                         color: Colors.white,
@@ -106,7 +112,7 @@ class MatchCard extends StatelessWidget {
                       fontSize: 38,
                       fontWeight: FontWeight.bold),
                 ),
-              _buildTeam(match.opponentName, Colors.green),
+              _buildTeam(match.teamBName, Colors.green),
             ],
           ),
           const SizedBox(height: 12),
@@ -160,7 +166,7 @@ class MatchCard extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         SizedBox(
-          width: 80,
+          width: 100,
           child: Text(name,
               style: const TextStyle(color: Colors.white, fontSize: 11),
               textAlign: TextAlign.center,

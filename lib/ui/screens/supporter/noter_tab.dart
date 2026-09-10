@@ -84,7 +84,7 @@ class NoterTab extends StatelessWidget {
                     const SizedBox(height: 10),
                     Text(
                       lastMatch != null
-                          ? 'Notre ASC vs ${lastMatch.opponentName}'
+                          ? '${lastMatch.teamAName} vs ${lastMatch.teamBName}'
                           : 'Aucun match terminé',
                       textAlign: TextAlign.center,
                       style: const TextStyle(

@@ -360,7 +360,7 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
               children: [
                 TeamLogo(
                   teamName: m['away'] ?? '',
-                  logoUrl: null, // Adversaire par défaut n'a pas de logo stocké ici
+                  logoUrl: m['away_logo'],
                   fallbackColor: const Color(0xFF0F8A4B),
                   size: 24,
                 ),
@@ -376,17 +376,40 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
             ),
           ),
           const SizedBox(width: 8),
-          // Poule badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              m['poule'] ?? '',
-              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.grey[600]),
-            ),
+          // Poule & Lieu badge
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  m['poule'] ?? '',
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+                ),
+              ),
+              if (m['lieu'] != null && m['lieu'].toString().isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.location_on, size: 10, color: Colors.grey[500]),
+                    const SizedBox(width: 2),
+                    Flexible(
+                      child: Text(
+                        m['lieu'],
+                        style: TextStyle(fontSize: 9, color: Colors.grey[500]),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ]
+            ],
           ),
         ],
       ),

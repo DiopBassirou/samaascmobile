@@ -180,7 +180,7 @@ class _LiveTabState extends State<LiveTab> {
                                     builder: (ctx) => AlertDialog(
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                       title: const Text('🏁 Sifflet Final ?'),
-                                      content: Text('Confirmer la fin du match ?\n\nScore final : Notre ASC ${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0} ${match.opponentName}'),
+                                      content: Text('Confirmer la fin du match ?\n\nScore final : ${match.teamAName} ${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0} ${match.teamBName}'),
                                       actions: [
                                         TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
                                         ElevatedButton(
@@ -340,7 +340,7 @@ class _LiveTabState extends State<LiveTab> {
                     style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold, letterSpacing: 2),
                   ),
                 ),
-              _buildTeamLogo(match.opponentName, const Color(0xFF42A5F5)),
+              _buildTeamLogo(match.teamBName, const Color(0xFF42A5F5)),
             ],
           ),
           if (isCom && match.statut == 'A_VENIR') ...[
@@ -736,13 +736,70 @@ class _MatchSheetState extends State<_MatchSheet> {
 
 
   Widget _buildCreateMatchTab() {
-    final poules = widget.pouleProv.poules;
+    // Filter poules by category
+    final poules = widget.pouleProv.poules.where((p) => p['categorie'] == _matchCategorie).toList();
 
     return SingleChildScrollView(
       padding: EdgeInsets.only(left: 20, right: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Catégorie du match (en premier)
+          const Text('Catégorie', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (_matchCategorie != 'SENIOR') {
+                      setState(() {
+                        _matchCategorie = 'SENIOR';
+                        _selectedPouleIndex = null;
+                        _selectedTeamId = null;
+                      });
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _matchCategorie == 'SENIOR' ? const Color(0xFF0A5C36) : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _matchCategorie == 'SENIOR' ? const Color(0xFF0A5C36) : Colors.grey[300]!),
+                    ),
+                    child: Center(child: Text('🧑 Seniors', style: TextStyle(fontWeight: FontWeight.bold, color: _matchCategorie == 'SENIOR' ? Colors.white : Colors.grey[600]))),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (_matchCategorie != 'CADET') {
+                      setState(() {
+                        _matchCategorie = 'CADET';
+                        _selectedPouleIndex = null;
+                        _selectedTeamId = null;
+                      });
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _matchCategorie == 'CADET' ? const Color(0xFF0F8A4B) : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _matchCategorie == 'CADET' ? const Color(0xFF0F8A4B) : Colors.grey[300]!),
+                    ),
+                    child: Center(child: Text('🏃 Cadets', style: TextStyle(fontWeight: FontWeight.bold, color: _matchCategorie == 'CADET' ? Colors.white : Colors.grey[600]))),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
           if (poules.isEmpty) ...[
             Center(
               child: Padding(
@@ -751,7 +808,7 @@ class _MatchSheetState extends State<_MatchSheet> {
                   children: [
                     Icon(Icons.info_outline, size: 48, color: Colors.grey[300]),
                     const SizedBox(height: 12),
-                    Text('Aucune poule trouvée', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[500])),
+                    Text('Aucune poule $_matchCategorie', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[500])),
                     const SizedBox(height: 6),
                     Text('Demandez à l\'admin de créer une poule.', style: TextStyle(color: Colors.grey[400]), textAlign: TextAlign.center),
                   ],
@@ -769,7 +826,7 @@ class _MatchSheetState extends State<_MatchSheet> {
                 border: Border.all(color: Colors.grey[300]!),
               ),
               child: DropdownButtonFormField<int>(
-                value: _selectedPouleIndex,
+                value: _selectedPouleIndex != null && _selectedPouleIndex! < poules.length ? _selectedPouleIndex : null,
                 isExpanded: true,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.emoji_events_outlined, color: Color(0xFF0A5C36)),
@@ -795,7 +852,7 @@ class _MatchSheetState extends State<_MatchSheet> {
             const SizedBox(height: 20),
 
             // Sélection adversaire
-            if (_selectedPouleIndex != null) ...[
+            if (_selectedPouleIndex != null && _selectedPouleIndex! < poules.length) ...[
               const Text('Adversaire', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
               const SizedBox(height: 8),
               Container(
@@ -825,46 +882,6 @@ class _MatchSheetState extends State<_MatchSheet> {
               ),
               const SizedBox(height: 20),
             ],
-
-            // Catégorie du match
-            const Text('Catégorie', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _matchCategorie = 'SENIOR'),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _matchCategorie == 'SENIOR' ? const Color(0xFF0A5C36) : Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _matchCategorie == 'SENIOR' ? const Color(0xFF0A5C36) : Colors.grey[300]!),
-                      ),
-                      child: Center(child: Text('🧑 Seniors', style: TextStyle(fontWeight: FontWeight.bold, color: _matchCategorie == 'SENIOR' ? Colors.white : Colors.grey[600]))),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _matchCategorie = 'CADET'),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _matchCategorie == 'CADET' ? const Color(0xFF0F8A4B) : Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _matchCategorie == 'CADET' ? const Color(0xFF0F8A4B) : Colors.grey[300]!),
-                      ),
-                      child: Center(child: Text('🏃 Cadets', style: TextStyle(fontWeight: FontWeight.bold, color: _matchCategorie == 'CADET' ? Colors.white : Colors.grey[600]))),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
 
             // Phase de la compétition
             const Text('Phase', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
