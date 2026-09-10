@@ -36,12 +36,18 @@ class MatchGame {
   final String dateMatch;
   final int? scoreAsc;
   final int? scoreAdv;
-  final String statut; // A_VENIR, EN_COURS, MI_TEMPS, DEUXIEME_MI_TEMPS, TERMINE
+  final String statut; // A_VENIR, EN_COURS, MI_TEMPS, TERMINE
   final String? hommeDuMatch;
   final String opponentName;
   final List<MatchEvent> events;
   final DateTime? startedAt;
   final DateTime? secondHalfStartedAt;
+
+  // Nouveaux champs (Catégorie, Lieu, Phase, Poule)
+  final String categorie;  // CADET ou SENIOR
+  final String? lieu;      // Terrain / Stade
+  final String? phase;     // Phase de Groupes, 1/4 Finale...
+  final String? pouleName; // Nom de la poule (ex: Poule A)
 
   MatchGame({
     required this.id,
@@ -51,10 +57,14 @@ class MatchGame {
     this.scoreAdv,
     required this.statut,
     this.hommeDuMatch,
-    this.opponentName = 'ASC Jaraaf',
+    this.opponentName = 'Adversaire',
     this.events = const [],
     this.startedAt,
     this.secondHalfStartedAt,
+    this.categorie = 'SENIOR',
+    this.lieu,
+    this.phase,
+    this.pouleName,
   });
 
   factory MatchGame.fromJson(Map<String, dynamic> json) {
@@ -69,10 +79,42 @@ class MatchGame {
       scoreAdv: json['score_adv'],
       statut: json['statut'] ?? 'A_VENIR',
       hommeDuMatch: json['homme_du_match'],
-      opponentName: json['opponent'] != null ? (json['opponent']['nom_equipe'] ?? 'Adversaire') : 'ASC Jaraaf',
+      opponentName: json['opponent'] != null
+          ? (json['opponent']['nom_equipe'] ?? 'Adversaire')
+          : 'Adversaire',
       events: parsedEvents,
       startedAt: json['started_at'] != null ? DateTime.parse(json['started_at']) : null,
-      secondHalfStartedAt: json['second_half_started_at'] != null ? DateTime.parse(json['second_half_started_at']) : null,
+      secondHalfStartedAt: json['second_half_started_at'] != null
+          ? DateTime.parse(json['second_half_started_at'])
+          : null,
+      categorie: json['categorie'] ?? 'SENIOR',
+      lieu: json['lieu'],
+      phase: json['phase'],
+      pouleName: json['opponent']?['poule']?['nom'],
     );
+  }
+
+  /// Retourne true si le match est aujourd'hui
+  bool get isToday {
+    final dt = DateTime.tryParse(dateMatch);
+    if (dt == null) return false;
+    final now = DateTime.now();
+    return dt.year == now.year && dt.month == now.month && dt.day == now.day;
+  }
+
+  /// Retourne true si le match était hier
+  bool get isYesterday {
+    final dt = DateTime.tryParse(dateMatch);
+    if (dt == null) return false;
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    return dt.year == yesterday.year && dt.month == yesterday.month && dt.day == yesterday.day;
+  }
+
+  /// Retourne true si le match est demain
+  bool get isTomorrow {
+    final dt = DateTime.tryParse(dateMatch);
+    if (dt == null) return false;
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    return dt.year == tomorrow.year && dt.month == tomorrow.month && dt.day == tomorrow.day;
   }
 }

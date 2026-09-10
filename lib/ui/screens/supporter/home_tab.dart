@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/match_provider.dart';
 import '../../../providers/news_provider.dart';
-
 import '../../../providers/auth_provider.dart';
+import '../../../ui/widgets/match_timer.dart';
 
 class SupporterHomeTab extends StatefulWidget {
   const SupporterHomeTab({super.key});
@@ -42,12 +42,12 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Notification banner (Seulement le dimanche)
-              if (DateTime.now().weekday == DateTime.sunday)
+              // Notification du dimanche
+              if (DateTime.now().weekday == DateTime.sunday) ...[
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9), // Vert très clair
+                    color: const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: Row(
@@ -69,64 +69,133 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                     ],
                   ),
                 ),
-              if (DateTime.now().weekday == DateTime.sunday)
                 const SizedBox(height: 20),
+              ],
 
-              // Live Score Card
-              if (matchToDisplay != null)
+              // === Carte du Match Principal ===
+              if (matchToDisplay != null) ...[
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF0A5C36), Color(0xFF0F8A4B)],
+                    gradient: LinearGradient(
+                      colors: isLive
+                          ? [const Color(0xFF7B0000), const Color(0xFF1B0000)]
+                          : [const Color(0xFF0A5C36), const Color(0xFF0F8A4B)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 15, offset: const Offset(0, 6)),
+                    ],
                   ),
                   child: Column(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isLive ? Colors.red : (isNext ? Colors.white.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.2)),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (isLive) const Icon(Icons.circle, color: Colors.white, size: 8),
-                            if (isLive) const SizedBox(width: 5),
-                            Text(
-                              isLive ? (matchToDisplay.statut == 'MI_TEMPS' ? '⏸ MI-TEMPS' : '🔴 EN DIRECT') : (isNext ? 'PROCHAIN MATCH' : 'DERNIER MATCH'), 
-                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)
+                      // Ligne de badges : Statut + Catégorie
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Badge Statut
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: isLive ? Colors.red : Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                          ],
-                        ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isLive) ...[
+                                  const Icon(Icons.circle, color: Colors.white, size: 8),
+                                  const SizedBox(width: 5),
+                                ],
+                                Text(
+                                  isLive
+                                      ? (matchToDisplay.statut == 'MI_TEMPS' ? '⏸ MI-TEMPS' : '🔴 EN DIRECT')
+                                      : (isNext ? '🗓 PROCHAIN MATCH' : '✅ DERNIER MATCH'),
+                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Badge Catégorie (CADET / SENIOR)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: matchToDisplay.categorie == 'CADET'
+                                  ? const Color(0xFF1565C0)
+                                  : Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              matchToDisplay.categorie == 'CADET' ? '🏃 Cadets' : '🧑 Seniors',
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 16),
+
+                      // Score ou VS
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           _buildTeam('Notre ASC', Colors.greenAccent),
                           if (isNext)
-                            const Text('VS', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold))
+                            const Text('VS', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold))
                           else
-                            Text('${matchToDisplay.scoreAsc ?? 0} - ${matchToDisplay.scoreAdv ?? 0}', style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
-                          _buildTeam(matchToDisplay.opponentName, Colors.blue),
+                            Text(
+                              '${matchToDisplay.scoreAsc ?? 0} - ${matchToDisplay.scoreAdv ?? 0}',
+                              style: const TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.bold),
+                            ),
+                          _buildTeam(matchToDisplay.opponentName, Colors.blueAccent),
                         ],
                       ),
-                      if (isLive) ...[
-                        const SizedBox(height: 8),
-                        Text(matchToDisplay.statut == 'MI_TEMPS' ? "Mi-Temps" : "Match en cours", style: const TextStyle(color: Colors.greenAccent, fontSize: 13)),
-                      ],
+                      const SizedBox(height: 12),
+
+                      // Chronomètre (seulement EN_COURS ou MI_TEMPS)
+                      if (isLive)
+                        MatchTimer(match: matchToDisplay),
+
+                      const SizedBox(height: 12),
+
+                      // Chips d'info : Poule | Phase | Terrain | Date relative
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          if (matchToDisplay.pouleName != null)
+                            _buildInfoChip(Icons.emoji_events_outlined, matchToDisplay.pouleName!),
+                          if (matchToDisplay.phase != null)
+                            _buildInfoChip(Icons.workspaces_outline, matchToDisplay.phase!),
+                          if (matchToDisplay.lieu != null && matchToDisplay.lieu!.isNotEmpty)
+                            _buildInfoChip(Icons.location_on_outlined, matchToDisplay.lieu!),
+                          _buildInfoChip(
+                            Icons.calendar_today_outlined,
+                            matchToDisplay.isToday
+                                ? "Aujourd'hui"
+                                : matchToDisplay.isYesterday
+                                    ? 'Hier'
+                                    : matchToDisplay.isTomorrow
+                                        ? 'Demain'
+                                        : _formatDate(matchToDisplay.dateMatch),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-              if (matchToDisplay != null)
                 const SizedBox(height: 20),
+              ],
 
-              // Fil d'actualité du match (Timeline)
-              if (matchToDisplay != null && (matchToDisplay.statut == 'EN_COURS' || matchToDisplay.statut == 'MI_TEMPS' || matchToDisplay.statut == 'TERMINE')) ...[
+              // Fil du Match (Timeline d'événements)
+              if (matchToDisplay != null &&
+                  (matchToDisplay.statut == 'EN_COURS' ||
+                      matchToDisplay.statut == 'MI_TEMPS' ||
+                      matchToDisplay.statut == 'TERMINE')) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -154,12 +223,12 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                 const SizedBox(height: 20),
               ],
 
-              // Homme du match (S'il existe pour le dernier match)
-              if (lastMatch != null && lastMatch.hommeDuMatch != null)
+              // Homme du match
+              if (lastMatch != null && lastMatch.hommeDuMatch != null) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0A5C36), // Changé du jaune au vert
+                    color: const Color(0xFF0A5C36),
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: Row(
@@ -176,10 +245,10 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                     ],
                   ),
                 ),
-              if (lastMatch != null && lastMatch.hommeDuMatch != null)
                 const SizedBox(height: 20),
+              ],
 
-              // Actualites
+              // Actualités
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -221,7 +290,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
             ],
           ),
         );
-      }
+      },
     );
   }
 
@@ -278,10 +347,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
             children: [
               Container(
                 width: 38, height: 38,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
                 child: Icon(icon, color: iconColor, size: 18),
               ),
               const SizedBox(width: 12),
@@ -297,10 +363,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                 child: Text("${e.minute}'", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: iconColor)),
               ),
             ],
@@ -314,7 +377,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
     return Column(
       children: [
         Container(
-          width: 50, height: 50,
+          width: 52, height: 52,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white.withValues(alpha: 0.2),
@@ -323,8 +386,35 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
           child: Center(child: Icon(Icons.circle, color: color, size: 18)),
         ),
         const SizedBox(height: 5),
-        Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
+        SizedBox(
+          width: 80,
+          child: Text(name, style: const TextStyle(color: Colors.white, fontSize: 11), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+        ),
       ],
     );
+  }
+
+  static Widget _buildInfoChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white70, size: 12),
+          const SizedBox(width: 5),
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  static String _formatDate(String dateStr) {
+    final dt = DateTime.tryParse(dateStr);
+    if (dt == null) return dateStr;
+    return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
   }
 }
