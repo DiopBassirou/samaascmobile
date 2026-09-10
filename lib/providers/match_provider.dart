@@ -93,7 +93,11 @@ class MatchProvider with ChangeNotifier {
     }
   }
 
-  Future<void> createMatch(AuthProvider authProvider, int pouleTeamId, String dateMatch) async {
+  Future<void> createMatch(AuthProvider authProvider, int pouleTeamId, String dateMatch, {
+    String categorie = 'SENIOR',
+    String lieu = '',
+    String phase = 'Phase de Groupes',
+  }) async {
     final token = authProvider.token;
     if (token == null) return;
 
@@ -109,6 +113,9 @@ class MatchProvider with ChangeNotifier {
         body: json.encode({
           'poule_team_id': pouleTeamId,
           'date_match': dateMatch,
+          'categorie': categorie,
+          if (lieu.isNotEmpty) 'lieu': lieu,
+          'phase': phase,
         }),
       );
 

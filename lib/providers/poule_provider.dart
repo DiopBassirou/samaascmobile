@@ -36,7 +36,7 @@ class PouleProvider with ChangeNotifier {
     }
   }
 
-  Future<void> createPoule(AuthProvider authProvider, String nomPoule, List<String> equipes) async {
+  Future<void> createPoule(AuthProvider authProvider, String nomPoule, List<String> equipes, {String categorie = 'SENIOR'}) async {
     final token = authProvider.token;
     if (token == null) return;
 
@@ -55,6 +55,7 @@ class PouleProvider with ChangeNotifier {
         body: json.encode({
           'nom': nomPoule,
           'equipes': equipes,
+          'categorie': categorie,
         }),
       );
 

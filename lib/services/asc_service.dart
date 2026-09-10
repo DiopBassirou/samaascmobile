@@ -13,6 +13,20 @@ class AscService {
     return prefs.getString('auth_token');
   }
 
+  /// Charge la liste de toutes les ASC validées (sans token - route publique)
+  Future<List<Map<String, dynamic>>> getValidatedAscs() async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/ascs'),
+      headers: {'Accept': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception('Impossible de charger les équipes');
+    }
+  }
+
   Future<Map<String, dynamic>> createAsc(String nom, String ville, String zone, File? recepisse) async {
     final token = await _getToken();
     var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl${ApiRoutes.ascCreate}'));

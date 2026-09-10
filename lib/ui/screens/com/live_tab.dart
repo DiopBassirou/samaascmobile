@@ -663,6 +663,15 @@ class _PouleMatchSheetState extends State<_PouleMatchSheet> with SingleTickerPro
   DateTime _matchDate = DateTime.now().add(const Duration(days: 2));
   TimeOfDay _matchTime = const TimeOfDay(hour: 16, minute: 0);
 
+  // Catégorie CADET / SENIOR
+  String _pouleCategorie = 'SENIOR';
+  String _matchCategorie = 'SENIOR';
+
+  // Match : lieu et phase
+  final _lieuController = TextEditingController();
+  String _matchPhase = 'Phase de Groupes';
+  static const _phases = ['Phase de Groupes', '1/4 Finale', '1/2 Finale', 'Finale', 'Match Amical'];
+
   @override
   void initState() {
     super.initState();
@@ -677,6 +686,7 @@ class _PouleMatchSheetState extends State<_PouleMatchSheet> with SingleTickerPro
   void dispose() {
     _tabController.dispose();
     _pouleNomController.dispose();
+    _lieuController.dispose();
     for (final c in _teamControllers) {
       c.dispose();
     }
@@ -812,6 +822,60 @@ class _PouleMatchSheetState extends State<_PouleMatchSheet> with SingleTickerPro
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF0A5C36), width: 2)),
             ),
           ),
+          const SizedBox(height: 20),
+
+          // Catégorie de la Poule
+          const Text('Catégorie', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _pouleCategorie = 'SENIOR'),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: _pouleCategorie == 'SENIOR' ? const Color(0xFF0A5C36) : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: _pouleCategorie == 'SENIOR' ? const Color(0xFF0A5C36) : Colors.grey[300]!),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.person, color: _pouleCategorie == 'SENIOR' ? Colors.white : Colors.grey[600], size: 18),
+                        const SizedBox(width: 6),
+                        Text('Seniors', style: TextStyle(fontWeight: FontWeight.bold, color: _pouleCategorie == 'SENIOR' ? Colors.white : Colors.grey[600])),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _pouleCategorie = 'CADET'),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: _pouleCategorie == 'CADET' ? const Color(0xFF1565C0) : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: _pouleCategorie == 'CADET' ? const Color(0xFF1565C0) : Colors.grey[300]!),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.directions_run, color: _pouleCategorie == 'CADET' ? Colors.white : Colors.grey[600], size: 18),
+                        const SizedBox(width: 6),
+                        Text('Cadets', style: TextStyle(fontWeight: FontWeight.bold, color: _pouleCategorie == 'CADET' ? Colors.white : Colors.grey[600])),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 24),
 
           // Équipes adverses
@@ -932,17 +996,13 @@ class _PouleMatchSheetState extends State<_PouleMatchSheet> with SingleTickerPro
                 }
 
                 try {
-                  await widget.pouleProv.createPoule(widget.auth, nom, equipes);
+                  await widget.pouleProv.createPoule(widget.auth, nom, equipes, categorie: _pouleCategorie);
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('✅ Poule "$nom" créée avec ${equipes.length} équipes !'), backgroundColor: const Color(0xFF2E7D32)),
+                      SnackBar(content: Text('✅ Poule "$nom" (${ _pouleCategorie == 'CADET' ? 'Cadets' : 'Seniors'}) créée !'), backgroundColor: const Color(0xFF2E7D32)),
                     );
-                    // Reset fields
                     _pouleNomController.clear();
-                    for (final c in _teamControllers) {
-                      c.clear();
-                    }
-                    // Switch to match tab
+                    for (final c in _teamControllers) { c.clear(); }
                     _tabController.animateTo(1);
                   }
                 } catch (e) {
@@ -1065,6 +1125,82 @@ class _PouleMatchSheetState extends State<_PouleMatchSheet> with SingleTickerPro
               const SizedBox(height: 20),
             ],
 
+            // Catégorie du match
+            const Text('Catégorie', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _matchCategorie = 'SENIOR'),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _matchCategorie == 'SENIOR' ? const Color(0xFF0A5C36) : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _matchCategorie == 'SENIOR' ? const Color(0xFF0A5C36) : Colors.grey[300]!),
+                      ),
+                      child: Center(child: Text('🧑 Seniors', style: TextStyle(fontWeight: FontWeight.bold, color: _matchCategorie == 'SENIOR' ? Colors.white : Colors.grey[600]))),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _matchCategorie = 'CADET'),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _matchCategorie == 'CADET' ? const Color(0xFF1565C0) : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _matchCategorie == 'CADET' ? const Color(0xFF1565C0) : Colors.grey[300]!),
+                      ),
+                      child: Center(child: Text('🏃 Cadets', style: TextStyle(fontWeight: FontWeight.bold, color: _matchCategorie == 'CADET' ? Colors.white : Colors.grey[600]))),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Phase de la compétition
+            const Text('Phase', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[300]!)),
+              child: DropdownButtonFormField<String>(
+                value: _matchPhase,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.workspaces_outline, color: Color(0xFF0A5C36)),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                items: _phases.map((p) => DropdownMenuItem(value: p, child: Text(p, style: const TextStyle(fontWeight: FontWeight.w600)))).toList(),
+                onChanged: (val) => setState(() => _matchPhase = val ?? 'Phase de Groupes'),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Lieu du match
+            const Text('Terrain / Lieu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _lieuController,
+              decoration: InputDecoration(
+                hintText: 'Ex: Terrain HLM, Stade Léopold Sédar...',
+                prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF0A5C36)),
+                filled: true,
+                fillColor: Colors.grey[50],
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey[300]!)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF0A5C36), width: 2)),
+              ),
+            ),
+            const SizedBox(height: 20),
+
             // Date et Heure du Match
             const Text('Date et Heure du Match', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
             const SizedBox(height: 8),
@@ -1166,7 +1302,14 @@ class _PouleMatchSheetState extends State<_PouleMatchSheet> with SingleTickerPro
                         );
 
                         try {
-                          await widget.matchProv.createMatch(widget.auth, _selectedTeamId!, dt.toIso8601String());
+                          await widget.matchProv.createMatch(
+                            widget.auth,
+                            _selectedTeamId!,
+                            dt.toIso8601String(),
+                            categorie: _matchCategorie,
+                            lieu: _lieuController.text.trim(),
+                            phase: _matchPhase,
+                          );
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('📅 Match programmé avec succès !'), backgroundColor: Color(0xFF2E7D32)),
