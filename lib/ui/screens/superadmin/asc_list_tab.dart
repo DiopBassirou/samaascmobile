@@ -347,8 +347,7 @@ class _AscListTabState extends State<AscListTab> {
       if (pickedFile == null) return;
 
       setState(() => _isLoading = true);
-      final file = File(pickedFile.path);
-      await _ascService.uploadAscLogo(codeUnique, file);
+      await _ascService.uploadAscLogo(codeUnique, pickedFile);
 
       if (!mounted) return;
       await _loadAscs();

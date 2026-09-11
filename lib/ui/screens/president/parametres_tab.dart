@@ -192,14 +192,13 @@ class _ParametresTabState extends State<ParametresTab> {
 
   Future<void> _pickAndUploadLogo(BuildContext context) async {
     final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      File file = File(image.path);
+    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
       if (context.mounted) {
         final ascProvider = Provider.of<AscProvider>(context, listen: false);
         try {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Upload en cours...')));
-          await ascProvider.uploadLogo(file);
+          await ascProvider.uploadLogo(pickedFile);
           if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Logo mis à jour !'), backgroundColor: Colors.green));
         } catch (e) {
           if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));

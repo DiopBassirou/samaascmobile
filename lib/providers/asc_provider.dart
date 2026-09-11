@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/asc_service.dart';
 
 class AscProvider with ChangeNotifier {
@@ -8,7 +8,7 @@ class AscProvider with ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  Future<void> createAsc(String nom, String ville, String zone, File? recepisse) async {
+  Future<void> createAsc(String nom, String ville, String zone, XFile? recepisse) async {
     _isLoading = true;
     notifyListeners();
     try {
@@ -65,7 +65,7 @@ class AscProvider with ChangeNotifier {
     }
   }
 
-  Future<void> uploadLogo(File logoFile) async {
+  Future<void> uploadLogo(XFile logoFile) async {
     _isLoading = true;
     notifyListeners();
     try {

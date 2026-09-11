@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 import '../core/constants/api_routes.dart';
 
 class AscService {
@@ -68,7 +69,7 @@ class AscService {
     }
   }
 
-  Future<Map<String, dynamic>> createAsc(String nom, String ville, String zone, File? recepisse) async {
+  Future<Map<String, dynamic>> createAsc(String nom, String ville, String zone, XFile? recepisse) async {
     final token = await _getToken();
     var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl${ApiRoutes.ascCreate}'));
     
@@ -82,7 +83,12 @@ class AscService {
     request.fields['zone'] = zone;
 
     if (recepisse != null) {
-      request.files.add(await http.MultipartFile.fromPath('recepisse', recepisse.path));
+      final bytes = await recepisse.readAsBytes();
+      request.files.add(http.MultipartFile.fromBytes(
+        'recepisse', 
+        bytes,
+        filename: recepisse.name,
+      ));
     }
 
     final response = await request.send();
@@ -156,7 +162,7 @@ class AscService {
     }
   }
 
-  Future<String?> uploadLogo(File logoFile) async {
+  Future<String?> uploadLogo(XFile logoFile) async {
     final token = await _getToken();
     var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/settings/logo'));
     
@@ -165,7 +171,12 @@ class AscService {
       'Authorization': 'Bearer $token',
     });
 
-    request.files.add(await http.MultipartFile.fromPath('logo', logoFile.path));
+    final bytes = await logoFile.readAsBytes();
+    request.files.add(http.MultipartFile.fromBytes(
+      'logo', 
+      bytes,
+      filename: logoFile.name,
+    ));
 
     final response = await request.send();
     final responseData = await response.stream.bytesToString();
@@ -247,7 +258,7 @@ class AscService {
   }
 
   /// Upload le logo d'une ASC spécifique (Super Admin)
-  Future<String?> uploadAscLogo(String codeUnique, File logoFile) async {
+  Future<String?> uploadAscLogo(String codeUnique, XFile logoFile) async {
     final token = await _getToken();
     var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/superadmin/ascs/$codeUnique/logo'));
 
@@ -256,7 +267,12 @@ class AscService {
       'Authorization': 'Bearer $token',
     });
 
-    request.files.add(await http.MultipartFile.fromPath('logo', logoFile.path));
+    final bytes = await logoFile.readAsBytes();
+    request.files.add(http.MultipartFile.fromBytes(
+      'logo', 
+      bytes,
+      filename: logoFile.name,
+    ));
 
     final response = await request.send();
     final responseData = await response.stream.bytesToString();
