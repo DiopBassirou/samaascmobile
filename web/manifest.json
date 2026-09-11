@@ -1,6 +1,6 @@
 {
-    "name": "sama_asc_mobile",
-    "short_name": "sama_asc_mobile",
+    "name": "SamaAsc",
+    "short_name": "SamaAsc",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
