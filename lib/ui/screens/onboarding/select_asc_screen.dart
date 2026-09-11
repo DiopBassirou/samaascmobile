@@ -377,14 +377,19 @@ class _SelectAscScreenState extends State<SelectAscScreen>
                               crossAxisCount: size.width > 600 ? 3 : 2,
                               mainAxisSpacing: 12,
                               crossAxisSpacing: 12,
-                              childAspectRatio: 1.1,
+                              childAspectRatio: 0.95,
                             ),
                             itemCount: _filteredAscs.length,
                             itemBuilder: (context, index) {
                               final asc = _filteredAscs[index];
                               final isSelected = _selectedAsc?['code_unique'] ==
                                   asc['code_unique'];
-                              final logoUrl = asc['logo_url'];
+                              // Construire l'URL du logo à partir de logo_path (plus fiable que logo_url)
+                              final logoPath = asc['logo_path'];
+                              final hasLogo = logoPath != null && logoPath.toString().isNotEmpty;
+                              final logoUrl = hasLogo
+                                  ? '${_ascService.getBaseUrlWithoutApi()}/storage/$logoPath'
+                                  : null;
                               final nom = asc['nom'] ?? 'ASC';
                               final zone = asc['zone'] ?? '';
                               final ascColor = _getAscColor(index);
@@ -462,10 +467,7 @@ class _SelectAscScreenState extends State<SelectAscScreen>
                                                   ),
                                                 ),
                                                 child: ClipOval(
-                                                  child: (logoUrl != null &&
-                                                          logoUrl
-                                                              .toString()
-                                                              .isNotEmpty)
+                                                  child: (logoUrl != null)
                                                       ? Image.network(
                                                           logoUrl,
                                                           fit: BoxFit.cover,
@@ -509,7 +511,7 @@ class _SelectAscScreenState extends State<SelectAscScreen>
                                                 maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
-                                                  fontSize: 13,
+                                                  fontSize: 12,
                                                   fontWeight: FontWeight.w700,
                                                   color: isSelected
                                                       ? primaryColor
