@@ -424,18 +424,22 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     final scoreAController = TextEditingController(text: (match['score_asc'] ?? 0).toString());
     final scoreBController = TextEditingController(text: (match['score_adv'] ?? 0).toString());
     
-    final isTermine = match['statut'] == 'TERMINE';
+    // Statut modifiable
+    const statuts = ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'TERMINE'];
+    String matchStatut = statuts.contains(match['statut']) ? match['statut'] : 'A_VENIR';
+    
     bool isLoading = false;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setStateDialog) => AlertDialog(
-          title: Text('Modifier Match', style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text('Modifier Match', style: TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Date & Heure
                 Row(
                   children: [
                     Expanded(
@@ -465,27 +469,38 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                   ],
                 ),
                 const SizedBox(height: 16),
+                // Lieu
                 TextField(
                   controller: lieuController,
                   decoration: InputDecoration(labelText: 'Lieu', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                 ),
                 const SizedBox(height: 16),
+                // Phase
                 DropdownButtonFormField<String>(
                   value: _phases.contains(matchPhase) ? matchPhase : 'Phase de Groupes',
                   decoration: InputDecoration(labelText: 'Phase', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                   items: _phases.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
                   onChanged: (val) => setStateDialog(() => matchPhase = val!),
                 ),
-                if (isTermine) ...[
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(child: TextField(controller: scoreAController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Score ASC'))),
-                      const SizedBox(width: 16),
-                      Expanded(child: TextField(controller: scoreBController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Score ADV'))),
-                    ],
-                  ),
-                ],
+                const SizedBox(height: 16),
+                // Statut
+                DropdownButtonFormField<String>(
+                  value: matchStatut,
+                  decoration: InputDecoration(labelText: 'Statut', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                  items: statuts.map((s) => DropdownMenuItem(value: s, child: Text(
+                    s == 'A_VENIR' ? 'A venir' : s == 'EN_COURS' ? 'En cours' : s == 'MI_TEMPS' ? 'Mi-temps' : 'Termine',
+                  ))).toList(),
+                  onChanged: (val) => setStateDialog(() => matchStatut = val!),
+                ),
+                const SizedBox(height: 16),
+                // Scores (toujours visibles)
+                Row(
+                  children: [
+                    Expanded(child: TextField(controller: scoreAController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Score ASC', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))))),
+                    const Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('—', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+                    Expanded(child: TextField(controller: scoreBController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Score ADV', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))))),
+                  ],
+                ),
               ],
             ),
           ),
@@ -502,16 +517,15 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                           'date_match': matchDate.toIso8601String(),
                           'lieu': lieuController.text,
                           'phase': matchPhase,
+                          'statut': matchStatut,
+                          'score_asc': int.tryParse(scoreAController.text) ?? 0,
+                          'score_adv': int.tryParse(scoreBController.text) ?? 0,
                         };
-                        if (isTermine) {
-                          data['score_asc'] = int.tryParse(scoreAController.text) ?? 0;
-                          data['score_adv'] = int.tryParse(scoreBController.text) ?? 0;
-                        }
                         await _ascService.updateSuperAdminMatch(match['id'], data);
                         if (!mounted) return;
                         Navigator.pop(ctx);
                         _fetchMatches();
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Match modifié avec succès'), backgroundColor: Colors.green));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Match modifie avec succes'), backgroundColor: Colors.green));
                       } catch (e) {
                         setStateDialog(() => isLoading = false);
                         if (!mounted) return;
