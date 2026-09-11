@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../core/constants/app_routes.dart';
 
+import '../../../services/device_service.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -27,17 +29,30 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // Redirection après 3 secondes
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        if (authProvider.isAuthenticated) {
-          Navigator.pushReplacementNamed(context, AppRoutes.home);
-        } else {
-          Navigator.pushReplacementNamed(context, AppRoutes.login);
-        }
-      }
-    });
+    // Redirection après 2.5 secondes
+    _handleRedirection();
+  }
+
+  Future<void> _handleRedirection() async {
+    await Future.delayed(const Duration(milliseconds: 2500));
+    if (!mounted) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.isAuthenticated) {
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      return;
+    }
+
+    final favoriteAsc = await DeviceService().getFavoriteAsc();
+    if (!mounted) return;
+
+    if (favoriteAsc != null) {
+      // Déjà choisi son ASC favorite -> accès direct à l'accueil
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    } else {
+      // Premier lancement -> sélection de l'ASC
+      Navigator.pushReplacementNamed(context, AppRoutes.selectAsc);
+    }
   }
 
   @override
@@ -64,25 +79,32 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  width: 120,
+                  height: 120,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
+                    color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.greenAccent.withValues(alpha: 0.3),
-                        blurRadius: 30,
-                        spreadRadius: 5,
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        spreadRadius: 3,
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.sports_soccer,
-                    size: 80,
-                    color: Colors.greenAccent,
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/app_logo.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.sports_soccer,
+                        size: 70,
+                        color: Color(0xFF0A5C36),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 25),
                 const Text(
                   'SAMA ASC',
                   style: TextStyle(

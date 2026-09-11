@@ -17,7 +17,7 @@ import 'package:sama_asc_mobile/ui/widgets/role_header.dart';
 // Supporter tabs
 import 'package:sama_asc_mobile/ui/screens/supporter/home_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/supporter/effectif_tab.dart';
-import 'package:sama_asc_mobile/ui/screens/supporter/cotiser_tab.dart';
+// import 'package:sama_asc_mobile/ui/screens/supporter/cotiser_tab.dart';
 
 // Tresorier tabs
 import 'package:sama_asc_mobile/ui/screens/tresorier/tableau_tab.dart';
@@ -35,6 +35,8 @@ import 'package:sama_asc_mobile/ui/screens/president/parametres_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/admin/poules_admin_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/superadmin/superadmin_matches_tab.dart';
 
+import 'package:sama_asc_mobile/services/device_service.dart';
+
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -45,22 +47,51 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
   bool _initialized = false;
+  Map<String, String>? _favoriteAsc;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavoriteAsc();
+  }
+
+  Future<void> _loadFavoriteAsc() async {
+    final fav = await DeviceService().getFavoriteAsc();
+    if (mounted) {
+      setState(() {
+        _favoriteAsc = fav;
+      });
+    }
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    if (auth.token != null && !_initialized) {
+    if (!_initialized) {
       _initialized = true;
-      Provider.of<PlayerProvider>(context, listen: false).fetchPlayers(auth);
-      Provider.of<MatchProvider>(context, listen: false).fetchMatches(auth);
-      Provider.of<NewsProvider>(context, listen: false).fetchNews(auth);
+      _loadData(auth);
+    }
+  }
+
+  Future<void> _loadData(AuthProvider auth) async {
+    final favAsc = await DeviceService().getFavoriteAsc();
+    final favAscCode = favAsc?['code_unique'];
+
+    if (mounted) {
+      Provider.of<MatchProvider>(context, listen: false).fetchMatches(auth, favAscCode);
+      Provider.of<NewsProvider>(context, listen: false).fetchNews(auth, favAscCode);
       Provider.of<ClassementProvider>(context, listen: false).fetchClassement(auth);
       Provider.of<PouleProvider>(context, listen: false).fetchPoules(auth);
-      Provider.of<FinanceProvider>(context, listen: false).fetchFinances(auth);
-      Provider.of<BureauProvider>(context, listen: false).fetchBureau(auth);
-      if (auth.user?['role']?['nom'] == 'PRESIDENT') {
-        Provider.of<AscProvider>(context, listen: false).fetchSettings();
+      if (favAscCode != null) {
+        Provider.of<PlayerProvider>(context, listen: false).fetchPlayers(auth, favAscCode);
+      }
+      if (auth.token != null) {
+        Provider.of<FinanceProvider>(context, listen: false).fetchFinances(auth);
+        Provider.of<BureauProvider>(context, listen: false).fetchBureau(auth);
+        if (auth.user?['role']?['nom'] == 'PRESIDENT') {
+          Provider.of<AscProvider>(context, listen: false).fetchSettings();
+        }
       }
     }
   }
@@ -72,16 +103,11 @@ class _MainShellState extends State<MainShell> {
     final financeProvider = Provider.of<FinanceProvider>(context);
     final bureauProvider = Provider.of<BureauProvider>(context);
     
-    // Empêcher l'affichage de la page par défaut lors de la déconnexion
-    if (user == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: Color(0xFF0A5C36))),
-      );
-    }
-
-    final String prenom = user['prenom'] ?? '';
-    final String nom = user['nom'] ?? '';
-    final String roleName = user['role']?['nom'] ?? 'Supporter';
+    // Si l'utilisateur est connecté, on utilise ses données
+    // Si c'est un invité, on utilise son ASC favorite
+    final String prenom = user != null ? (user['prenom'] ?? '') : (_favoriteAsc?['nom'] ?? 'Supporter');
+    final String nom = user != null ? (user['nom'] ?? '') : '';
+    final String roleName = user != null ? (user['role']?['nom'] ?? 'Supporter') : 'Supporter';
 
     final config = _getRoleConfig(roleName, context, financeProvider, bureauProvider);
     final tabs = config['tabs'] as List<Widget>;
@@ -89,7 +115,7 @@ class _MainShellState extends State<MainShell> {
     final primaryColor = config['primaryColor'] as Color;
     final badgeColor = config['badgeColor'] as Color;
     final roleIcon = config['roleIcon'] as IconData;
-    final roleLabel = config['roleLabel'] as String;
+    final roleLabel = user != null ? (config['roleLabel'] as String) : (_favoriteAsc?['nom'] ?? 'Supporter');
     final stats = config['stats'] as List<StatCardData>;
 
     // Security to avoid out of bounds when switching roles
@@ -245,14 +271,14 @@ class _MainShellState extends State<MainShell> {
             EffectifComTab(),
             ClassementTab(),
             AnnoncesTab(),
-            CotiserTab(),
+            // CotiserTab(),
           ],
           'navItems': const [
             BottomNavigationBarItem(icon: Icon(Icons.flash_on), label: 'Live'),
             BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Effectif'),
             BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Classement'),
             BottomNavigationBarItem(icon: Icon(Icons.campaign), label: 'Annonces'),
-            BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Cotiser'),
+            // BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Cotiser'),
           ],
         };
 
@@ -277,14 +303,14 @@ class _MainShellState extends State<MainShell> {
             EffectifTab(),
             ClassementTab(),
             NoterTab(),
-            CotiserTab(),
+            // CotiserTab(),
           ],
           'navItems': const [
             BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Accueil'),
             BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Effectif'),
             BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Classement'),
             BottomNavigationBarItem(icon: Icon(Icons.star_rounded), label: 'Noter'),
-            BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Cotiser'),
+            // BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Cotiser'),
           ],
         };
 
@@ -303,14 +329,14 @@ class _MainShellState extends State<MainShell> {
             ParametresTab(),
             SupporterHomeTab(),
             AnnoncesTab(),
-            CotiserTab(),
+            // CotiserTab(),
           ],
           'navItems': const [
             BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Bureau'),
             BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Paramètres'),
             BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Match'),
             BottomNavigationBarItem(icon: Icon(Icons.campaign), label: 'Annonces'),
-            BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Cotiser'),
+            // BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Cotiser'),
           ],
         };
 
@@ -325,13 +351,13 @@ class _MainShellState extends State<MainShell> {
             SupporterHomeTab(),
             EffectifTab(),
             ClassementTab(),
-            CotiserTab(),
+            // CotiserTab(),
           ],
           'navItems': const [
             BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Accueil'),
             BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Effectif'),
             BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Classement'),
-            BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Cotiser'),
+            // BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Cotiser'),
           ],
         };
     }

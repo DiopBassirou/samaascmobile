@@ -15,18 +15,24 @@ class PlayerProvider with ChangeNotifier {
   List<Player> get nonRetenus => _players.where((p) => p.statutConvocation == null || p.statutConvocation == 'REPOS').toList();
   bool get isLoading => _isLoading;
 
-  Future<void> fetchPlayers(AuthProvider authProvider) async {
-    final token = authProvider.token;
-    if (token == null) return;
+  Future<void> fetchPlayers([AuthProvider? authProvider, String? ascCode]) async {
+    final token = authProvider?.token;
 
     _isLoading = true;
     notifyListeners();
 
     try {
       final apiUrl = dotenv.env['API_URL'] ?? 'http://127.0.0.1:8000/api';
+      final uri = Uri.parse('$apiUrl/players').replace(
+        queryParameters: (ascCode != null && ascCode.isNotEmpty) ? {'asc_code': ascCode} : null,
+      );
+
       final response = await http.get(
-        Uri.parse('$apiUrl/players'),
-        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+        uri,
+        headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
       );
 
       if (response.statusCode == 200) {

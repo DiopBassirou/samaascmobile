@@ -67,36 +67,64 @@ class RoleHeader extends StatelessWidget {
                   ),
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: badgeColor.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: badgeColor.withValues(alpha: 0.5)),
+                      if (context.watch<AuthProvider>().isAuthenticated) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: badgeColor.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: badgeColor.withValues(alpha: 0.5)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(roleIcon, color: Colors.white, size: 16),
+                              const SizedBox(width: 5),
+                              Text(
+                                roleName.toUpperCase(),
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(roleIcon, color: Colors.white, size: 16),
-                            const SizedBox(width: 5),
-                            Text(
-                              roleName.toUpperCase(),
-                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
-                          ],
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.logout, color: Colors.white, size: 20),
+                          onPressed: () async {
+                            await context.read<AuthProvider>().logout();
+                            if (context.mounted) {
+                              Navigator.pushReplacementNamed(context, '/select-asc');
+                            }
+                          },
+                          tooltip: 'Déconnexion',
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.logout, color: Colors.white, size: 20),
-                        onPressed: () async {
-                          await context.read<AuthProvider>().logout();
-                          if (context.mounted) {
-                            Navigator.pushReplacementNamed(context, '/login');
-                          }
-                        },
-                        tooltip: 'Déconnexion',
-                      ),
+                      ] else ...[
+                        // Bouton Changer d'ASC
+                        IconButton(
+                          icon: const Icon(Icons.swap_horiz, color: Colors.white, size: 22),
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/select-asc');
+                          },
+                          tooltip: 'Changer d\'ASC',
+                        ),
+                        // Bouton Connexion / Espace Membre
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/login');
+                          },
+                          icon: const Icon(Icons.login, size: 16, color: Color(0xFF0A5C36)),
+                          label: const Text('Connexion', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0A5C36))),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF0A5C36),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],

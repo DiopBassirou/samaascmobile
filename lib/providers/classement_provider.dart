@@ -22,9 +22,8 @@ class ClassementProvider with ChangeNotifier {
   List<String> get availableCategories => _availableCategories;
   bool get isLoadingMatches => _isLoadingMatches;
 
-  Future<void> fetchClassement(AuthProvider authProvider) async {
-    final token = authProvider.token;
-    if (token == null) return;
+  Future<void> fetchClassement([AuthProvider? authProvider]) async {
+    final token = authProvider?.token;
 
     _isLoading = true;
     notifyListeners();
@@ -33,7 +32,10 @@ class ClassementProvider with ChangeNotifier {
       final apiUrl = dotenv.env['API_BASE_URL'] ?? 'http://127.0.0.1:8000/api';
       final response = await http.get(
         Uri.parse('$apiUrl/classement'),
-        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+        headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
       );
 
       if (response.statusCode == 200) {
@@ -47,9 +49,8 @@ class ClassementProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchAllMatches(AuthProvider authProvider, {String? zone, String? categorie}) async {
-    final token = authProvider.token;
-    if (token == null) return;
+  Future<void> fetchAllMatches({AuthProvider? authProvider, String? zone, String? categorie}) async {
+    final token = authProvider?.token;
 
     _isLoadingMatches = true;
     notifyListeners();
@@ -63,7 +64,10 @@ class ClassementProvider with ChangeNotifier {
       final uri = Uri.parse('$apiUrl/all-matches').replace(queryParameters: params.isNotEmpty ? params : null);
       final response = await http.get(
         uri,
-        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+        headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
       );
 
       if (response.statusCode == 200) {

@@ -16,6 +16,7 @@ import 'providers/poule_provider.dart';
 import 'providers/bureau_provider.dart';
 import 'ui/screens/auth/splash_screen.dart';
 import 'ui/screens/auth/login_screen.dart';
+import 'ui/screens/onboarding/select_asc_screen.dart';
 import 'ui/screens/setup/asc_setup_screen.dart';
 import 'ui/shells/main_shell.dart';
 
@@ -54,7 +55,6 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ClassementProvider()),
         ChangeNotifierProvider(create: (_) => PouleProvider()),
         ChangeNotifierProvider(create: (_) => BureauProvider()),
-        ChangeNotifierProvider(create: (_) => AscProvider()),
       ],
       child: const MyApp(),
     ),
@@ -97,6 +97,7 @@ class MyApp extends StatelessWidget {
       initialRoute: AppRoutes.splash,
       routes: {
         AppRoutes.splash: (context) => const SplashScreen(),
+        AppRoutes.selectAsc: (context) => const SelectAscScreen(),
         AppRoutes.login: (context) => const LoginScreen(),
         AppRoutes.ascSetup: (context) => const AscSetupScreen(),
         AppRoutes.home: (context) => const MainShell(),

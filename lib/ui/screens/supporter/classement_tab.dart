@@ -24,7 +24,7 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final prov = Provider.of<ClassementProvider>(context, listen: false);
       prov.fetchClassement(auth);
-      prov.fetchAllMatches(auth);
+      prov.fetchAllMatches(authProvider: auth);
     });
   }
 
@@ -38,7 +38,7 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final prov = Provider.of<ClassementProvider>(context, listen: false);
     prov.fetchAllMatches(
-      auth,
+      authProvider: auth,
       zone: _selectedZone.isNotEmpty ? _selectedZone : null,
       categorie: _selectedCategorie.isNotEmpty ? _selectedCategorie : null,
     );

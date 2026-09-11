@@ -37,18 +37,24 @@ class MatchProvider with ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  Future<void> fetchMatches(AuthProvider authProvider) async {
-    final token = authProvider.token;
-    if (token == null) return;
+  Future<void> fetchMatches([AuthProvider? authProvider, String? ascCode]) async {
+    final token = authProvider?.token;
 
     _isLoading = true;
     notifyListeners();
 
     try {
       final apiUrl = dotenv.env['API_URL'] ?? 'http://127.0.0.1:8000/api';
+      final uri = Uri.parse('$apiUrl/matches').replace(
+        queryParameters: (ascCode != null && ascCode.isNotEmpty) ? {'asc_code': ascCode} : null,
+      );
+
       final response = await http.get(
-        Uri.parse('$apiUrl/matches'),
-        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+        uri,
+        headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
       );
 
       if (response.statusCode == 200) {

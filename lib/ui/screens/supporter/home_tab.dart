@@ -7,6 +7,8 @@ import '../../../models/match_model.dart';
 import '../../../ui/widgets/match_timer.dart';
 import '../../widgets/team_logo.dart';
 
+import '../../../services/device_service.dart';
+
 class SupporterHomeTab extends StatefulWidget {
   const SupporterHomeTab({super.key});
 
@@ -18,12 +20,14 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final matchProv = Provider.of<MatchProvider>(context, listen: false);
       final newsProv = Provider.of<NewsProvider>(context, listen: false);
-      if (matchProv.matches.isEmpty) matchProv.fetchMatches(auth);
-      if (newsProv.news.isEmpty) newsProv.fetchNews(auth);
+      final favAsc = await DeviceService().getFavoriteAsc();
+      final favAscCode = favAsc?['code_unique'];
+      if (matchProv.matches.isEmpty) matchProv.fetchMatches(auth, favAscCode);
+      if (newsProv.news.isEmpty) newsProv.fetchNews(auth, favAscCode);
     });
   }
 
@@ -53,9 +57,11 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
 
         return RefreshIndicator(
           onRefresh: () async {
-            await matchProvider.fetchMatches(authProvider);
+            final favAsc = await DeviceService().getFavoriteAsc();
+            final favAscCode = favAsc?['code_unique'];
+            await matchProvider.fetchMatches(authProvider, favAscCode);
             if (context.mounted) {
-              await newsProvider.fetchNews(authProvider);
+              await newsProvider.fetchNews(authProvider, favAscCode);
             }
           },
           child: SingleChildScrollView(
