@@ -36,7 +36,7 @@ class PlayerProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
         _players = data.map((json) => Player.fromJson(json)).toList();
       }
     } catch (e) {
@@ -58,7 +58,7 @@ class PlayerProvider with ChangeNotifier {
         body: json.encode({'nom': nom, 'poste': poste}),
       );
       if (response.statusCode == 201) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         _players.add(Player.fromJson(data));
         notifyListeners();
       } else {

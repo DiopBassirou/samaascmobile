@@ -58,7 +58,7 @@ class MatchProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
         _matches = data.map((json) => MatchGame.fromJson(json)).toList();
       }
     } catch (e) {

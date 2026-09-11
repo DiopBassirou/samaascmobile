@@ -18,7 +18,7 @@ class RatingService {
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception('Erreur de chargement des matchs');
     }
@@ -32,7 +32,7 @@ class RatingService {
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception('Erreur de chargement des joueurs');
     }

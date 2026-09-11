@@ -33,7 +33,7 @@ class NewsProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
         _news = data.map((json) => Announcement.fromJson(json)).toList();
       }
     } catch (e) {
@@ -57,7 +57,7 @@ class NewsProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         _news.insert(0, Announcement.fromJson(data));
         notifyListeners();
       } else {

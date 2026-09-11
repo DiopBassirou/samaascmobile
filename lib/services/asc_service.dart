@@ -23,7 +23,7 @@ class AscService {
       headers: {'Accept': 'application/json'},
     );
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
       return data.cast<Map<String, dynamic>>();
     } else {
       throw Exception('Impossible de charger les équipes');
@@ -40,7 +40,7 @@ class AscService {
       },
     );
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
       return data.cast<Map<String, dynamic>>();
     } else {
       throw Exception('Impossible de charger les équipes super admin');
@@ -62,7 +62,7 @@ class AscService {
       }),
     );
     if (response.statusCode == 201) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception('Erreur lors de la création de l\'ASC');
     }
@@ -108,9 +108,9 @@ class AscService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
-      final error = jsonDecode(response.body);
+      final error = jsonDecode(utf8.decode(response.bodyBytes));
       throw Exception(error['message'] ?? 'Erreur inconnue');
     }
   }
@@ -126,7 +126,7 @@ class AscService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception('Impossible de charger les paramètres');
     }
@@ -150,7 +150,7 @@ class AscService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body)['settings'];
+      return jsonDecode(utf8.decode(response.bodyBytes))['settings'];
     } else {
       throw Exception('Erreur de mise à jour des paramètres');
     }
@@ -214,9 +214,9 @@ class AscService {
     );
 
     if (response.statusCode == 201) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
-      final err = jsonDecode(response.body);
+      final err = jsonDecode(utf8.decode(response.bodyBytes));
       throw Exception(err['message'] ?? 'Erreur lors de la création du match');
     }
   }
@@ -239,9 +239,9 @@ class AscService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
-      final err = jsonDecode(response.body);
+      final err = jsonDecode(utf8.decode(response.bodyBytes));
       throw Exception(err['message'] ?? 'Erreur mise à jour du score');
     }
   }
@@ -285,9 +285,9 @@ class AscService {
     );
 
     if (response.statusCode == 201) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
-      final err = jsonDecode(response.body);
+      final err = jsonDecode(utf8.decode(response.bodyBytes));
       throw Exception(err['message'] ?? 'Erreur lors de l\'ajout du joueur');
     }
   }
@@ -304,7 +304,7 @@ class AscService {
     );
 
     if (response.statusCode != 200) {
-      final err = jsonDecode(response.body);
+      final err = jsonDecode(utf8.decode(response.bodyBytes));
       throw Exception(err['message'] ?? 'Erreur lors de la suppression');
     }
   }
@@ -323,9 +323,9 @@ class AscService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
-      final err = jsonDecode(response.body);
+      final err = jsonDecode(utf8.decode(response.bodyBytes));
       throw Exception(err['message'] ?? 'Erreur lors de la mise à jour');
     }
   }
@@ -342,7 +342,7 @@ class AscService {
     );
 
     if (response.statusCode == 200) {
-      return List<Map<String, dynamic>>.from(jsonDecode(response.body));
+      return List<Map<String, dynamic>>.from(jsonDecode(utf8.decode(response.bodyBytes)));
     } else {
       throw Exception('Erreur de chargement des matchs');
     }

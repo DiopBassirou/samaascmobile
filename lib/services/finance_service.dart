@@ -18,7 +18,7 @@ class FinanceService {
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception('Erreur de chargement des finances');
     }
@@ -41,7 +41,7 @@ class FinanceService {
       }),
     );
     if (response.statusCode == 201) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception('Erreur lors de la sauvegarde: ${response.body}');
     }

@@ -15,7 +15,7 @@ class BureauService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      return json.decode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception('Erreur lors du chargement du bureau');
     }
@@ -31,7 +31,7 @@ class BureauService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      return json.decode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception('Erreur lors de la recherche des utilisateurs');
     }
@@ -52,9 +52,9 @@ class BureauService {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return json.decode(response.body);
+      return json.decode(utf8.decode(response.bodyBytes));
     } else {
-      final body = json.decode(response.body);
+      final body = json.decode(utf8.decode(response.bodyBytes));
       throw Exception(body['message'] ?? 'Erreur lors de l\'assignation du rôle');
     }
   }

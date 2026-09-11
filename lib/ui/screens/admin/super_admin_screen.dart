@@ -82,7 +82,7 @@ class _SuperAdminScreenState extends State<SuperAdminScreen> with SingleTickerPr
       );
       if (response.statusCode == 200) {
         setState(() {
-          _pendingAscs = jsonDecode(response.body);
+          _pendingAscs = jsonDecode(utf8.decode(response.bodyBytes));
           _isLoading = false;
         });
       }

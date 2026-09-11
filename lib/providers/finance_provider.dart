@@ -44,7 +44,7 @@ class FinanceProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        _transactions = json.decode(response.body);
+        _transactions = json.decode(utf8.decode(response.bodyBytes));
         _solde = 0;
         for (var t in _transactions) {
           if (t['type'] == 'ENTREE') _solde += double.tryParse(t['montant'].toString()) ?? 0;

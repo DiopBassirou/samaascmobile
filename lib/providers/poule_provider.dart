@@ -26,7 +26,7 @@ class PouleProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        _poules = json.decode(response.body);
+        _poules = json.decode(utf8.decode(response.bodyBytes));
       }
     } catch (e) {
       debugPrint('Error fetching poules: $e');

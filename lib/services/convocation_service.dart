@@ -15,7 +15,7 @@ class ConvocationService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception("Erreur lors de la récupération des joueurs");
     }
@@ -35,7 +35,7 @@ class ConvocationService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception("Erreur de validation de l'effectif");
     }

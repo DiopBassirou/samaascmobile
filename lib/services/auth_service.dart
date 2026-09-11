@@ -17,10 +17,10 @@ class AuthService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       try {
-        final body = jsonDecode(response.body);
+        final body = jsonDecode(utf8.decode(response.bodyBytes));
         if (body['message'] != null) {
           throw Exception(body['message']);
         }
@@ -44,10 +44,10 @@ class AuthService {
     );
 
     if (response.statusCode == 201) {
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       try {
-        final body = jsonDecode(response.body);
+        final body = jsonDecode(utf8.decode(response.bodyBytes));
         if (body['message'] != null) {
           throw Exception(body['message']);
         }

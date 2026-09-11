@@ -39,7 +39,7 @@ class ClassementProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        _zonesData = json.decode(response.body);
+        _zonesData = json.decode(utf8.decode(response.bodyBytes));
       }
     } catch (e) {
       debugPrint('Error fetching classement: $e');
@@ -71,7 +71,7 @@ class ClassementProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         _allMatchDates = data['dates'] ?? [];
         _availableZones = List<String>.from(data['zones'] ?? []);
         _availableCategories = List<String>.from(data['categories'] ?? ['SENIOR', 'CADET']);
