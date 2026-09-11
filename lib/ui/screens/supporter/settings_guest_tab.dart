@@ -51,10 +51,10 @@ class _SettingsGuestTabState extends State<SettingsGuestTab> {
   }
 
   Future<void> _handleLogin() async {
-    final email = _loginEmailController.text.trim();
+    final phone = _loginEmailController.text.trim();
     final password = _loginPasswordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
+    if (phone.isEmpty || password.isEmpty) {
       _showSnack('Remplis tous les champs');
       return;
     }
@@ -62,7 +62,7 @@ class _SettingsGuestTabState extends State<SettingsGuestTab> {
     setState(() => _isLoading = true);
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.login(email, password);
+      await authProvider.login(phone, password);
       if (mounted) {
         _showSnack('Connexion réussie ! 🎉');
         // Recharger la page principale
@@ -403,7 +403,7 @@ class _SettingsGuestTabState extends State<SettingsGuestTab> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildTextField(_loginEmailController, 'Email', Icons.email_outlined),
+          _buildTextField(_loginEmailController, 'Téléphone', Icons.phone_outlined, keyboardType: TextInputType.phone),
           const SizedBox(height: 12),
           _buildTextField(_loginPasswordController, 'Mot de passe', Icons.lock_outline, isPassword: true),
           const SizedBox(height: 20),
@@ -616,10 +616,11 @@ class _SettingsGuestTabState extends State<SettingsGuestTab> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool isPassword = false}) {
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool isPassword = false, TextInputType? keyboardType}) {
     return TextField(
       controller: controller,
       obscureText: isPassword,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
