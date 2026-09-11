@@ -16,7 +16,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="SAMA ASC - Suivez les matchs de Navétane en direct, classements et actualités de votre ASC.">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -27,7 +27,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png">
 
-  <title>sama_asc_mobile</title>
+  <title>SAMA ASC — Navétane en Direct</title>
   <link rel="manifest" href="manifest.json">
   <style id="splash-screen-style">
     html {
@@ -110,6 +110,19 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCrE_3jFLXKcQY3wfAakAfkSubFBAiBkQU",
+      authDomain: "sama-asc-aa8cb.firebaseapp.com",
+      projectId: "sama-asc-aa8cb",
+      storageBucket: "sama-asc-aa8cb.firebasestorage.app",
+      messagingSenderId: "613103570154",
+      appId: "1:613103570154:web:86e64cd4a675202dcf5b93"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
   <script src="flutter_bootstrap.js" async=""></script>
 
 

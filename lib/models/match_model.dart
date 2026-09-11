@@ -101,6 +101,28 @@ class MatchGame {
     );
   }
 
+  /// Parse le format JSON retourné par /api/all-matches
+  /// Les clés sont différentes : home/away au lieu de team_a_name/team_b_name
+  factory MatchGame.fromAllMatchesJson(Map<String, dynamic> json) {
+    return MatchGame(
+      id: json['id'] ?? 0,
+      ascCode: '',
+      dateMatch: json['date_match']?.toString() ?? '',
+      scoreAsc: json['score_home'],
+      scoreAdv: json['score_away'],
+      statut: json['statut'] ?? 'A_VENIR',
+      teamAName: json['home'] ?? 'Equipe A',
+      teamALogo: json['home_logo'],
+      teamBName: json['away'] ?? 'Equipe B',
+      teamBLogo: json['away_logo'],
+      events: const [],
+      categorie: json['categorie'] ?? 'SENIOR',
+      lieu: json['lieu'],
+      phase: json['poule'],
+      pouleName: json['poule'],
+    );
+  }
+
   /// Retourne true si le match est aujourd'hui
   bool get isToday {
     final dt = DateTime.tryParse(dateMatch);

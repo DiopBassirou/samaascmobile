@@ -11,6 +11,7 @@ import 'package:sama_asc_mobile/providers/bureau_provider.dart';
 import 'package:sama_asc_mobile/providers/asc_provider.dart';
 import 'package:sama_asc_mobile/ui/screens/supporter/classement_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/supporter/noter_tab.dart';
+import 'package:sama_asc_mobile/ui/screens/supporter/settings_guest_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/superadmin/asc_list_tab.dart';
 import 'package:sama_asc_mobile/ui/widgets/role_header.dart';
 
@@ -303,14 +304,14 @@ class _MainShellState extends State<MainShell> {
             EffectifTab(),
             ClassementTab(),
             NoterTab(),
-            // CotiserTab(),
+            SettingsGuestTab(),
           ],
           'navItems': const [
             BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Accueil'),
             BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Effectif'),
             BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Classement'),
             BottomNavigationBarItem(icon: Icon(Icons.star_rounded), label: 'Noter'),
-            // BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Cotiser'),
+            BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Paramètres'),
           ],
         };
 
@@ -349,15 +350,13 @@ class _MainShellState extends State<MainShell> {
           'stats': <StatCardData>[],
           'tabs': const [
             SupporterHomeTab(),
-            EffectifTab(),
             ClassementTab(),
-            // CotiserTab(),
+            SettingsGuestTab(),
           ],
           'navItems': const [
             BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Accueil'),
-            BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Effectif'),
             BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Classement'),
-            // BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Cotiser'),
+            BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Paramètres'),
           ],
         };
     }
