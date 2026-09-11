@@ -13,6 +13,7 @@ import 'package:sama_asc_mobile/ui/screens/supporter/classement_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/supporter/noter_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/supporter/settings_guest_tab.dart';
 import 'package:sama_asc_mobile/ui/screens/superadmin/asc_list_tab.dart';
+import 'package:sama_asc_mobile/ui/screens/superadmin/superadmin_stats_tab.dart';
 import 'package:sama_asc_mobile/ui/widgets/role_header.dart';
 
 // Supporter tabs
@@ -187,11 +188,13 @@ class _MainShellState extends State<MainShell> {
             StatCardData(label: 'PARAMÈTRES', value: 'Système'),
           ],
           'tabs': const [
+            SuperAdminStatsTab(),
             AscListTab(),
             SuperAdminMatchesTab(),
             PoulesAdminTab(),
           ],
           'navItems': const [
+            BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Stats'),
             BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'Gestion ASC'),
             BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Matchs'),
             BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Poules'),
