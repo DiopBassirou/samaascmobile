@@ -449,15 +449,15 @@ class _SelectAscScreenState extends State<SelectAscScreen>
                                       // Card content
                                       Center(
                                         child: Padding(
-                                          padding: const EdgeInsets.all(12),
+                                          padding: const EdgeInsets.all(8), // Padding reduit pour plus de place
                                           child: Column(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
                                               // Avatar / Logo
                                               Container(
-                                                width: 56,
-                                                height: 56,
+                                                width: 50, // Logo legerement plus petit
+                                                height: 50,
                                                 decoration: BoxDecoration(
                                                   color: ascColor.withValues(alpha: 0.12),
                                                   shape: BoxShape.circle,
@@ -482,7 +482,7 @@ class _SelectAscScreenState extends State<SelectAscScreen>
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w900,
-                                                                  fontSize: 18,
+                                                                  fontSize: 16, // Font size reduite
                                                                 ),
                                                               ),
                                                             );
@@ -495,24 +495,25 @@ class _SelectAscScreenState extends State<SelectAscScreen>
                                                               color: ascColor,
                                                               fontWeight:
                                                                   FontWeight.w900,
-                                                              fontSize: 18,
+                                                              fontSize: 16,
                                                             ),
                                                           ),
                                                         ),
                                                 ),
                                               ),
 
-                                              const SizedBox(height: 10),
+                                              const SizedBox(height: 6), // Espace reduit
 
                                               // Nom ASC
                                               Text(
                                                 nom,
                                                 textAlign: TextAlign.center,
-                                                maxLines: 2,
+                                                maxLines: 3, // Autorise jusqu'a 3 lignes
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 11, // Police un peu plus petite
+                                                  fontWeight: FontWeight.w800, // Plus gras pour compenser la taille
+                                                  height: 1.2, // Interligne plus serre
                                                   color: isSelected
                                                       ? primaryColor
                                                       : Colors.black87,
