@@ -125,5 +125,44 @@
   </script>
   <script src="flutter_bootstrap.js" async=""></script>
 
+  <!-- Auto-update: verifie la version et force le rechargement si nouvelle version -->
+  <script>
+    (function() {
+      const CURRENT_VERSION_KEY = 'sama_asc_version';
+      
+      fetch('version.json?t=' + Date.now())
+        .then(r => r.json())
+        .then(data => {
+          const savedVersion = localStorage.getItem(CURRENT_VERSION_KEY);
+          const serverVersion = data.version;
+          
+          if (savedVersion && savedVersion !== serverVersion) {
+            // Nouvelle version detectee ! Vider le cache et recharger
+            console.log('Mise a jour detectee: ' + savedVersion + ' -> ' + serverVersion);
+            localStorage.setItem(CURRENT_VERSION_KEY, serverVersion);
+            
+            // Supprimer le service worker et vider les caches
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(regs => {
+                regs.forEach(reg => reg.unregister());
+              });
+            }
+            if ('caches' in window) {
+              caches.keys().then(names => {
+                names.forEach(name => caches.delete(name));
+              });
+            }
+            
+            // Recharger la page apres un court delai
+            setTimeout(() => window.location.reload(true), 500);
+          } else if (!savedVersion) {
+            // Premier lancement, sauvegarder la version
+            localStorage.setItem(CURRENT_VERSION_KEY, serverVersion);
+          }
+        })
+        .catch(() => {}); // Si pas de connexion, on continue normalement
+    })();
+  </script>
+
 
 </body></html>
