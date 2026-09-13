@@ -6,6 +6,7 @@ import '../../widgets/team_logo.dart';
 import '../../../providers/poule_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../models/match_model.dart';
+import '../../../services/asc_service.dart';
 
 class LiveTab extends StatefulWidget {
   const LiveTab({super.key});
@@ -251,6 +252,152 @@ class _LiveTabState extends State<LiveTab> {
     );
   }
 
+  void _showEditMatchDialog(MatchGame match, AuthProvider auth, MatchProvider matchProv) {
+    DateTime matchDate = match.dateMatch.isNotEmpty ? DateTime.tryParse(match.dateMatch) ?? DateTime.now() : DateTime.now();
+    TimeOfDay matchTime = TimeOfDay(hour: matchDate.hour, minute: matchDate.minute);
+    
+    final lieuController = TextEditingController(text: match.lieu ?? '');
+    String matchPhase = match.phase ?? 'Phase de Groupes';
+    
+    // Statut modifiable pour Chargé de com
+    const statuts = ['A_VENIR', 'REPORTE'];
+    String matchStatut = statuts.contains(match.statut) ? match.statut : 'A_VENIR';
+    
+    bool isLoading = false;
+    
+    final pouleProv = Provider.of<PouleProvider>(context, listen: false);
+    final categoryPoules = pouleProv.poules.where((p) => p['categorie'] == match.categorie).toList();
+    List<Map<String, dynamic>> allTeams = [];
+    for (var p in categoryPoules) {
+      if (p['teams'] != null) {
+        for (var t in p['teams']) {
+          allTeams.add({...t as Map<String, dynamic>, 'poule_nom': p['nom']});
+        }
+      }
+    }
+    
+    int? teamBId = match.opponentId;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: const Text('Modifier le Match', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Equipe B (Adversaire)
+                if (allTeams.isNotEmpty) ...[
+                  DropdownButtonFormField<int>(
+                    value: teamBId,
+                    decoration: InputDecoration(labelText: 'Adversaire', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                    items: allTeams.map((t) => DropdownMenuItem<int>(
+                      value: t['id'] as int,
+                      child: Text(t['nom_equipe'] ?? '', overflow: TextOverflow.ellipsis),
+                    )).toList(),
+                    onChanged: (val) => setStateDialog(() => teamBId = val),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                // Date & Heure
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final dt = await showDatePicker(context: context, initialDate: matchDate, firstDate: DateTime(2020), lastDate: DateTime(2030));
+                          if (dt != null) setStateDialog(() => matchDate = DateTime(dt.year, dt.month, dt.day, matchTime.hour, matchTime.minute));
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                          decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(10)),
+                          child: Row(children: [const Icon(Icons.calendar_today, size: 18), const SizedBox(width: 8), Text('${matchDate.day}/${matchDate.month}/${matchDate.year}')]),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final t = await showTimePicker(context: context, initialTime: matchTime);
+                          if (t != null) {
+                            setStateDialog(() {
+                              matchTime = t;
+                              matchDate = DateTime(matchDate.year, matchDate.month, matchDate.day, t.hour, t.minute);
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                          decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(10)),
+                          child: Row(children: [const Icon(Icons.access_time, size: 18), const SizedBox(width: 8), Text('${matchTime.hour.toString().padLeft(2, '0')}:${matchTime.minute.toString().padLeft(2, '0')}')]),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Lieu
+                TextField(
+                  controller: lieuController,
+                  decoration: InputDecoration(labelText: 'Lieu', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                ),
+                const SizedBox(height: 16),
+                // Phase
+                DropdownButtonFormField<String>(
+                  value: ['Phase de Groupes', '1/4 Finale', '1/2 Finale', 'Finale', 'Match Amical'].contains(matchPhase) ? matchPhase : 'Phase de Groupes',
+                  decoration: InputDecoration(labelText: 'Phase', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                  items: ['Phase de Groupes', '1/4 Finale', '1/2 Finale', 'Finale', 'Match Amical'].map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+                  onChanged: (val) => setStateDialog(() => matchPhase = val!),
+                ),
+                const SizedBox(height: 16),
+                // Statut
+                DropdownButtonFormField<String>(
+                  value: matchStatut,
+                  decoration: InputDecoration(labelText: 'Statut', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                  items: statuts.map((s) => DropdownMenuItem(value: s, child: Text(s == 'A_VENIR' ? 'A venir' : 'Reporté'))).toList(),
+                  onChanged: (val) => setStateDialog(() => matchStatut = val!),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler', style: TextStyle(color: Colors.grey))),
+            isLoading
+                ? const Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: CircularProgressIndicator(strokeWidth: 2))
+                : ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0A5C36), foregroundColor: Colors.white),
+                    onPressed: () async {
+                      setStateDialog(() => isLoading = true);
+                      try {
+                        final Map<String, dynamic> data = {
+                          'date_match': matchDate.toIso8601String(),
+                          'lieu': lieuController.text,
+                          'phase': matchPhase,
+                          'statut': matchStatut,
+                        };
+                        if (teamBId != null) data['poule_team_b_id'] = teamBId;
+                        
+                        await Provider.of<AscService>(context, listen: false).updateComMatch(match.id, data);
+                        if (!mounted) return;
+                        Navigator.pop(ctx);
+                        matchProv.fetchMatches(auth);
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Match modifié avec succès'), backgroundColor: Colors.green));
+                      } catch (e) {
+                        setStateDialog(() => isLoading = false);
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+                      }
+                    },
+                    child: const Text('Enregistrer'),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -285,6 +432,10 @@ class _LiveTabState extends State<LiveTab> {
         badgeColor = Colors.grey[700]!;
         badgeText = '🏁 MATCH TERMINÉ';
         break;
+      case 'REPORTE':
+        badgeColor = Colors.orange;
+        badgeText = '⚠️ MATCH REPORTÉ';
+        break;
       default:
         badgeColor = const Color(0xFF0F8A4B);
         badgeText = '📅 MATCH À VENIR';
@@ -306,17 +457,30 @@ class _LiveTabState extends State<LiveTab> {
       ),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(20)),
-            child: Text(badgeText, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(20)),
+                child: Text(badgeText, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+              if (isCom && (match.statut == 'A_VENIR' || match.statut == 'REPORTE')) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.white70, size: 20),
+                  onPressed: () => _showEditMatchDialog(match, auth, matchProv),
+                  tooltip: 'Modifier le match',
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildTeamLogo(auth.user?['asc']?['nom'] ?? 'Notre ASC', const Color(0xFF66BB6A), logoUrl: auth.user?['asc']?['logo_url']),
-              if (match.statut == 'A_VENIR')
+              if (match.statut == 'A_VENIR' || match.statut == 'REPORTE')
                 Column(
                   children: [
                     const Text('VS', style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w300)),
@@ -343,7 +507,7 @@ class _LiveTabState extends State<LiveTab> {
               _buildTeamLogo(match.teamBName, const Color(0xFF42A5F5)),
             ],
           ),
-          if (isCom && match.statut == 'A_VENIR') ...[
+          if (isCom && (match.statut == 'A_VENIR' || match.statut == 'REPORTE')) ...[
             const SizedBox(height: 18),
             SizedBox(
               width: 220,

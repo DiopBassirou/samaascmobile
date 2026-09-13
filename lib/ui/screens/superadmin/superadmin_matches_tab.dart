@@ -425,10 +425,31 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     final scoreBController = TextEditingController(text: (match['score_adv'] ?? 0).toString());
     
     // Statut modifiable
-    const statuts = ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'TERMINE'];
+    const statuts = ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'TERMINE', 'REPORTE'];
     String matchStatut = statuts.contains(match['statut']) ? match['statut'] : 'A_VENIR';
     
     bool isLoading = false;
+    
+    // Recuperer toutes les equipes de la meme categorie
+    final pouleProv = Provider.of<PouleProvider>(context, listen: false);
+    final categoryPoules = pouleProv.poules.where((p) => p['categorie'] == match['categorie']).toList();
+    List<Map<String, dynamic>> allTeams = [];
+    for (var p in categoryPoules) {
+      if (p['teams'] != null) {
+        for (var t in p['teams']) {
+          allTeams.add({...t as Map<String, dynamic>, 'poule_nom': p['nom']});
+        }
+      }
+    }
+    
+    int? teamAId;
+    int? teamBId = match['opponent']?['id'];
+    
+    try {
+      teamAId = allTeams.firstWhere((t) => t['asc_code'] == match['asc_code'])['id'];
+    } catch (e) {
+      // Team A non trouvee dans la liste (peut-etre pas dans la meme categorie ou pas enregistree)
+    }
 
     showDialog(
       context: context,
@@ -439,6 +460,29 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Equipes
+                if (allTeams.isNotEmpty) ...[
+                  DropdownButtonFormField<int>(
+                    value: teamAId,
+                    decoration: InputDecoration(labelText: 'Équipe A', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                    items: allTeams.map((t) => DropdownMenuItem<int>(
+                      value: t['id'] as int,
+                      child: Text(t['nom_equipe'] ?? '', overflow: TextOverflow.ellipsis),
+                    )).toList(),
+                    onChanged: (val) => setStateDialog(() => teamAId = val),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: teamBId,
+                    decoration: InputDecoration(labelText: 'Équipe B', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                    items: allTeams.where((t) => t['id'] != teamAId).map((t) => DropdownMenuItem<int>(
+                      value: t['id'] as int,
+                      child: Text(t['nom_equipe'] ?? '', overflow: TextOverflow.ellipsis),
+                    )).toList(),
+                    onChanged: (val) => setStateDialog(() => teamBId = val),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 // Date & Heure
                 Row(
                   children: [
@@ -488,7 +532,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                   value: matchStatut,
                   decoration: InputDecoration(labelText: 'Statut', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                   items: statuts.map((s) => DropdownMenuItem(value: s, child: Text(
-                    s == 'A_VENIR' ? 'A venir' : s == 'EN_COURS' ? 'En cours' : s == 'MI_TEMPS' ? 'Mi-temps' : 'Termine',
+                    s == 'A_VENIR' ? 'A venir' : s == 'EN_COURS' ? 'En cours' : s == 'MI_TEMPS' ? 'Mi-temps' : s == 'REPORTE' ? 'Reporté' : 'Terminé',
                   ))).toList(),
                   onChanged: (val) => setStateDialog(() => matchStatut = val!),
                 ),
@@ -521,6 +565,9 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                           'score_asc': int.tryParse(scoreAController.text) ?? 0,
                           'score_adv': int.tryParse(scoreBController.text) ?? 0,
                         };
+                        if (teamAId != null) data['poule_team_a_id'] = teamAId;
+                        if (teamBId != null) data['poule_team_b_id'] = teamBId;
+                        
                         await _ascService.updateSuperAdminMatch(match['id'], data);
                         if (!mounted) return;
                         Navigator.pop(ctx);

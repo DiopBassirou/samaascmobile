@@ -51,6 +51,8 @@ class MatchGame {
   final String? lieu;      // Terrain / Stade
   final String? phase;     // Phase de Groupes, 1/4 Finale...
   final String? pouleName; // Nom de la poule (ex: Poule A)
+  final int? opponentId;
+  final Map<String, dynamic>? rawOpponent;
 
   MatchGame({
     required this.id,
@@ -71,6 +73,8 @@ class MatchGame {
     this.lieu,
     this.phase,
     this.pouleName,
+    this.opponentId,
+    this.rawOpponent,
   });
 
   factory MatchGame.fromJson(Map<String, dynamic> json) {
@@ -98,6 +102,8 @@ class MatchGame {
       lieu: json['lieu'],
       phase: json['phase'],
       pouleName: json['opponent']?['poule']?['nom'] ?? json['phase'],
+      opponentId: json['opponent']?['id'],
+      rawOpponent: json['opponent'],
     );
   }
 

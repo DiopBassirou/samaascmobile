@@ -84,10 +84,17 @@ class AscService {
 
     if (recepisse != null) {
       final bytes = await recepisse.readAsBytes();
+      
+      // Pour éviter les problèmes d'extension manquante sur le Web
+      String filename = recepisse.name.isNotEmpty ? recepisse.name : 'recepisse.jpg';
+      if (!filename.contains('.')) {
+        filename += '.jpg';
+      }
+
       request.files.add(http.MultipartFile.fromBytes(
         'recepisse', 
         bytes,
-        filename: recepisse.name,
+        filename: filename,
       ));
     }
 
@@ -172,10 +179,17 @@ class AscService {
     });
 
     final bytes = await logoFile.readAsBytes();
+
+    // Pour éviter les problèmes d'extension manquante sur le Web
+    String filename = logoFile.name.isNotEmpty ? logoFile.name : 'logo.jpg';
+    if (!filename.contains('.')) {
+      filename += '.jpg';
+    }
+
     request.files.add(http.MultipartFile.fromBytes(
       'logo', 
       bytes,
-      filename: logoFile.name,
+      filename: filename,
     ));
 
     final response = await request.send();
@@ -268,10 +282,17 @@ class AscService {
     });
 
     final bytes = await logoFile.readAsBytes();
+    
+    // Pour éviter les problèmes d'extension manquante sur le Web
+    String filename = logoFile.name.isNotEmpty ? logoFile.name : 'logo.jpg';
+    if (!filename.contains('.')) {
+      filename += '.jpg';
+    }
+
     request.files.add(http.MultipartFile.fromBytes(
       'logo', 
       bytes,
-      filename: logoFile.name,
+      filename: filename,
     ));
 
     final response = await request.send();
@@ -330,6 +351,27 @@ class AscService {
     final token = await _getToken();
     final response = await http.put(
       Uri.parse('$_baseUrl/superadmin/matches/$matchId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } else {
+      final err = jsonDecode(utf8.decode(response.bodyBytes));
+      throw Exception(err['message'] ?? 'Erreur lors de la mise à jour');
+    }
+  }
+
+  /// Met à jour un match (Com)
+  Future<Map<String, dynamic>> updateComMatch(int matchId, Map<String, dynamic> data) async {
+    final token = await _getToken();
+    final response = await http.put(
+      Uri.parse('$_baseUrl/matches/$matchId'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
