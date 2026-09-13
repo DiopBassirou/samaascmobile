@@ -36,7 +36,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
     return Consumer2<MatchProvider, NewsProvider>(
       builder: (context, matchProvider, newsProvider, child) {
         final currentMatches = matchProvider.matches.where((m) => m.statut == 'EN_COURS' || m.statut == 'MI_TEMPS').toList();
-        final nextMatches = matchProvider.matches.where((m) => m.statut == 'A_VENIR').toList();
+        final nextMatches = matchProvider.matches.where((m) => m.statut == 'A_VENIR' || m.statut == 'REPORTE').toList();
         final lastMatches = matchProvider.matches.where((m) => m.statut == 'TERMINE').toList();
         lastMatches.sort((a, b) => b.dateMatch.compareTo(a.dateMatch)); // desc
         nextMatches.sort((a, b) => a.dateMatch.compareTo(b.dateMatch)); // asc
@@ -231,7 +231,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
 
   Widget _buildMatchCard(MatchGame match, AuthProvider authProvider) {
     final isLive = match.statut == 'EN_COURS' || match.statut == 'MI_TEMPS';
-    final isNext = match.statut == 'A_VENIR';
+    final isNext = match.statut == 'A_VENIR' || match.statut == 'REPORTE';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -272,7 +272,9 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                       decoration: BoxDecoration(
-                        color: isLive ? Colors.red : Colors.white.withValues(alpha: 0.2),
+                        color: isLive 
+                            ? Colors.red 
+                            : (match.statut == 'REPORTE' ? Colors.orange : Colors.white.withValues(alpha: 0.2)),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -285,7 +287,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                           Text(
                             isLive
                                 ? (match.statut == 'MI_TEMPS' ? '⏸ MI-TEMPS' : '🔴 EN DIRECT')
-                                : (isNext ? '🗓 PROCHAIN MATCH' : '✅ DERNIER MATCH'),
+                                : (match.statut == 'REPORTE' ? '⚠️ REPORTÉ' : (isNext ? '🗓 PROCHAIN MATCH' : '✅ DERNIER MATCH')),
                             style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ],

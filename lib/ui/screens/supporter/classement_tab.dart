@@ -274,7 +274,7 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
     final statut = m['statut'] ?? 'A_VENIR';
     final isTermine = statut == 'TERMINE';
     final isLive = statut == 'EN_COURS' || statut == 'MI_TEMPS';
-    final isAVenir = statut == 'A_VENIR';
+    final isAVenir = statut == 'A_VENIR' || statut == 'REPORTE';
     final categorie = m['categorie'] ?? 'SENIOR';
 
     return Padding(
@@ -332,8 +332,8 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
             child: Center(
               child: isAVenir
                   ? Text(
-                      _formatTime(m['date_match']),
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey[600]),
+                      statut == 'REPORTE' ? 'Reporté' : _formatTime(m['date_match']),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: statut == 'REPORTE' ? 11 : 12, color: statut == 'REPORTE' ? Colors.orange : Colors.grey[600]),
                     )
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
