@@ -164,7 +164,7 @@ class MatchProvider with ChangeNotifier {
     }
   }
 
-  Future<void> addMatchEvent(AuthProvider authProvider, int matchId, String type, {int? playerId, int? minute, String? description}) async {
+  Future<void> addMatchEvent(AuthProvider authProvider, int matchId, String type, {int? playerId, String? playerName, int? minute, String? description}) async {
     final token = authProvider.token;
     if (token == null) return;
 
@@ -180,6 +180,7 @@ class MatchProvider with ChangeNotifier {
         body: json.encode({
           'type': type,
           'player_id': playerId,
+          'player_name': playerName,
           'minute': minute ?? 1,
           'description': description,
         }),
@@ -193,6 +194,40 @@ class MatchProvider with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error adding match event: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> superAdminAddEvent(AuthProvider authProvider, int matchId, String type, {int? playerId, String? playerName, int? minute, String? description}) async {
+    final token = authProvider.token;
+    if (token == null) return;
+
+    try {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://127.0.0.1:8000/api';
+      final response = await http.post(
+        Uri.parse('$apiUrl/superadmin/matches/$matchId/events'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode({
+          'type': type,
+          'player_id': playerId,
+          'player_name': playerName,
+          'minute': minute ?? 1,
+          'description': description,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        await fetchMatches(authProvider);
+      } else {
+        debugPrint('Error adding event (Super Admin): ${response.statusCode} ${response.body}');
+        throw Exception('Erreur serveur : ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Error adding match event (Super Admin): $e');
       rethrow;
     }
   }

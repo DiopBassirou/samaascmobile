@@ -40,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         );
         if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.home);
       } catch (e) {
+        if (!mounted) return;
         String errorMessage = e.toString().replaceAll('Exception: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -128,7 +128,7 @@ class _LiveTabState extends State<LiveTab> {
                                   () async {
                                     try {
                                       await matchProv.updateMatchStatus(auth, match.id, 'MI_TEMPS');
-                                      await matchProv.addMatchEvent(auth, match.id, 'MI_TEMPS', minute: 45, description: 'Sifflet de la mi-temps');
+                                      await matchProv.addMatchEvent(auth, match.id, 'MI_TEMPS', minute: 40, description: 'Sifflet de la mi-temps');
                                       if (mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(content: Text('⏸ Mi-temps sifflée !'), backgroundColor: Colors.orange),
@@ -290,7 +290,7 @@ class _LiveTabState extends State<LiveTab> {
                 // Equipe B (Adversaire)
                 if (allTeams.isNotEmpty) ...[
                   DropdownButtonFormField<int>(
-                    value: teamBId,
+                    initialValue: teamBId,
                     decoration: InputDecoration(labelText: 'Adversaire', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                     items: allTeams.map((t) => DropdownMenuItem<int>(
                       value: t['id'] as int,
@@ -346,7 +346,7 @@ class _LiveTabState extends State<LiveTab> {
                 const SizedBox(height: 16),
                 // Phase
                 DropdownButtonFormField<String>(
-                  value: ['Phase de Groupes', '1/4 Finale', '1/2 Finale', 'Finale', 'Match Amical'].contains(matchPhase) ? matchPhase : 'Phase de Groupes',
+                  initialValue: ['Phase de Groupes', '1/4 Finale', '1/2 Finale', 'Finale', 'Match Amical'].contains(matchPhase) ? matchPhase : 'Phase de Groupes',
                   decoration: InputDecoration(labelText: 'Phase', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                   items: ['Phase de Groupes', '1/4 Finale', '1/2 Finale', 'Finale', 'Match Amical'].map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
                   onChanged: (val) => setStateDialog(() => matchPhase = val!),
@@ -354,7 +354,7 @@ class _LiveTabState extends State<LiveTab> {
                 const SizedBox(height: 16),
                 // Statut
                 DropdownButtonFormField<String>(
-                  value: matchStatut,
+                  initialValue: matchStatut,
                   decoration: InputDecoration(labelText: 'Statut', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                   items: statuts.map((s) => DropdownMenuItem(value: s, child: Text(s == 'A_VENIR' ? 'A venir' : 'Reporté'))).toList(),
                   onChanged: (val) => setStateDialog(() => matchStatut = val!),
@@ -682,9 +682,11 @@ class _LiveTabState extends State<LiveTab> {
   }
 
   // Dialog pour enregistrer un but (buteur & minute)
-  void _showAddGoalDialog(BuildContext context, AuthProvider auth, MatchProvider matchProv, PlayerProvider playerProv, MatchGame match, bool isAsc) {
+  void _showAddGoalDialog(BuildContext context, AuthProvider auth, MatchProvider matchProv, PlayerProvider playerProv, MatchGame match, bool isAsc, {bool isSuperAdmin = false}) {
     int? selectedPlayerId = playerProv.players.isNotEmpty ? playerProv.players.first.id : null;
     final minuteController = TextEditingController(text: '');
+    final manualNameController = TextEditingController(text: '');
+    bool isManual = playerProv.players.isEmpty;
 
     showDialog(
       context: context,
@@ -705,23 +707,50 @@ class _LiveTabState extends State<LiveTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (isAsc) ...[
-                    const Text('Buteur :', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<int>(
-                      value: selectedPlayerId,
-                      isExpanded: true,
-                      items: playerProv.players.map((p) {
-                        return DropdownMenuItem<int>(
-                          value: p.id,
-                          child: Text('${p.nom} (${p.poste})', overflow: TextOverflow.ellipsis),
-                        );
-                      }).toList(),
-                      onChanged: (val) => setDialogState(() => selectedPlayerId = val),
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Buteur :', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        if (playerProv.players.isNotEmpty)
+                          Row(
+                            children: [
+                              const Text('Saisie manuelle', style: TextStyle(fontSize: 11)),
+                              Switch(
+                                value: isManual,
+                                onChanged: (val) => setDialogState(() => isManual = val),
+                                activeColor: const Color(0xFF2E7D32),
+                              ),
+                            ],
+                          ),
+                      ],
                     ),
+                    const SizedBox(height: 4),
+                    if (!isManual)
+                      DropdownButtonFormField<int>(
+                        initialValue: selectedPlayerId,
+                        isExpanded: true,
+                        items: playerProv.players.map((p) {
+                          return DropdownMenuItem<int>(
+                            value: p.id,
+                            child: Text('${p.nom} (${p.poste})', overflow: TextOverflow.ellipsis),
+                          );
+                        }).toList(),
+                        onChanged: (val) => setDialogState(() => selectedPlayerId = val),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      )
+                    else
+                      TextField(
+                        controller: manualNameController,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          hintText: 'ex: Moussa (9)',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    const SizedBox(height: 12),
                   ],
                   const Text('Minute du but :', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   const SizedBox(height: 8),
@@ -748,18 +777,40 @@ class _LiveTabState extends State<LiveTab> {
                   label: const Text('Valider'),
                   onPressed: () async {
                     final minute = int.tryParse(minuteController.text) ?? 1;
-                    final playerName = isAsc && selectedPlayerId != null
-                        ? playerProv.players.where((p) => p.id == selectedPlayerId).firstOrNull?.nom
-                        : null;
+                    String? playerName;
+                    int? finalPlayerId;
+
+                    if (isAsc) {
+                      if (isManual) {
+                        playerName = manualNameController.text.trim();
+                      } else if (selectedPlayerId != null) {
+                        finalPlayerId = selectedPlayerId;
+                        playerName = playerProv.players.where((p) => p.id == selectedPlayerId).firstOrNull?.nom;
+                      }
+                    }
+                    
                     try {
-                      await matchProv.addMatchEvent(
-                        auth,
-                        match.id,
-                        isAsc ? 'BUT_ASC' : 'BUT_ADV',
-                        playerId: isAsc ? selectedPlayerId : null,
-                        minute: minute,
-                        description: isAsc ? 'But de ${playerName ?? "Notre ASC"} ($minute\')' : 'But adverse ($minute\')',
-                      );
+                      if (isSuperAdmin) {
+                        await matchProv.superAdminAddEvent(
+                          auth,
+                          match.id,
+                          isAsc ? 'BUT_ASC' : 'BUT_ADV',
+                          playerId: finalPlayerId,
+                          playerName: playerName,
+                          minute: minute,
+                          description: isAsc ? 'But de ${playerName ?? "l\'équipe"} ($minute\')' : 'But adverse ($minute\')',
+                        );
+                      } else {
+                        await matchProv.addMatchEvent(
+                          auth,
+                          match.id,
+                          isAsc ? 'BUT_ASC' : 'BUT_ADV',
+                          playerId: finalPlayerId,
+                          playerName: playerName,
+                          minute: minute,
+                          description: isAsc ? 'But de ${playerName ?? "Notre ASC"} ($minute\')' : 'But adverse ($minute\')',
+                        );
+                      }
                       if (ctx.mounted) Navigator.pop(ctx);
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -990,7 +1041,7 @@ class _MatchSheetState extends State<_MatchSheet> {
                 border: Border.all(color: Colors.grey[300]!),
               ),
               child: DropdownButtonFormField<int>(
-                value: _selectedPouleIndex != null && _selectedPouleIndex! < poules.length ? _selectedPouleIndex : null,
+                initialValue: _selectedPouleIndex != null && _selectedPouleIndex! < poules.length ? _selectedPouleIndex : null,
                 isExpanded: true,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.emoji_events_outlined, color: Color(0xFF0A5C36)),
@@ -1026,7 +1077,7 @@ class _MatchSheetState extends State<_MatchSheet> {
                   border: Border.all(color: Colors.grey[300]!),
                 ),
                 child: DropdownButtonFormField<int>(
-                  value: _selectedTeamId,
+                  initialValue: _selectedTeamId,
                   isExpanded: true,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.shield_outlined, color: Color(0xFF0A5C36)),
@@ -1053,7 +1104,7 @@ class _MatchSheetState extends State<_MatchSheet> {
             Container(
               decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[300]!)),
               child: DropdownButtonFormField<String>(
-                value: _matchPhase,
+                initialValue: _matchPhase,
                 isExpanded: true,
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.workspaces_outline, color: Color(0xFF0A5C36)),

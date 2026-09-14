@@ -22,7 +22,7 @@ class MatchEvent {
       id: json['id'],
       matchGameId: json['match_game_id'],
       playerId: json['player_id'],
-      playerName: json['player'] != null ? json['player']['nom'] : null,
+      playerName: json['player'] != null ? json['player']['nom'] : json['player_name'],
       type: json['type'],
       minute: json['minute'] ?? 0,
       description: json['description'],

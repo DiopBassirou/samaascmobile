@@ -597,7 +597,7 @@ class _SettingsGuestTabState extends State<SettingsGuestTab> {
             child: OutlinedButton.icon(
               onPressed: () async {
                 await auth.logout();
-                if (context.mounted) {
+                if (mounted) {
                   Navigator.pushReplacementNamed(context, AppRoutes.selectAsc);
                 }
               },

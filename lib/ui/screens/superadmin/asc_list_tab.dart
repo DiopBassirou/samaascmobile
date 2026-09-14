@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../../services/asc_service.dart';
 
@@ -293,7 +292,7 @@ class _AscListTabState extends State<AscListTab> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: poste,
+                initialValue: poste,
                 decoration: InputDecoration(
                   labelText: 'Poste',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

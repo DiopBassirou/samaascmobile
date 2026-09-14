@@ -92,9 +92,8 @@ class RoleHeader extends StatelessWidget {
                           icon: const Icon(Icons.logout, color: Colors.white, size: 20),
                           onPressed: () async {
                             await context.read<AuthProvider>().logout();
-                            if (context.mounted) {
-                              Navigator.pushReplacementNamed(context, '/select-asc');
-                            }
+                            if (!context.mounted) return;
+                            Navigator.pushReplacementNamed(context, '/select-asc');
                           },
                           tooltip: 'Déconnexion',
                         ),

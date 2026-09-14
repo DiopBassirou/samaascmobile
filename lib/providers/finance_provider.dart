@@ -47,8 +47,9 @@ class FinanceProvider with ChangeNotifier {
         _transactions = json.decode(utf8.decode(response.bodyBytes));
         _solde = 0;
         for (var t in _transactions) {
-          if (t['type'] == 'ENTREE') _solde += double.tryParse(t['montant'].toString()) ?? 0;
-          else if (t['type'] == 'SORTIE') _solde -= double.tryParse(t['montant'].toString()) ?? 0;
+          if (t['type'] == 'ENTREE') {
+            _solde += double.tryParse(t['montant'].toString()) ?? 0;
+          } else if (t['type'] == 'SORTIE') _solde -= double.tryParse(t['montant'].toString()) ?? 0;
         }
       }
       _isLoading = false;

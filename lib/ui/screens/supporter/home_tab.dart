@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import '../../../providers/match_provider.dart';
 import '../../../providers/news_provider.dart';
 import '../../../providers/auth_provider.dart';
@@ -17,6 +18,8 @@ class SupporterHomeTab extends StatefulWidget {
 }
 
 class _SupporterHomeTabState extends State<SupporterHomeTab> {
+  Timer? _refreshTimer;
+
   @override
   void initState() {
     super.initState();
@@ -28,14 +31,27 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
       final favAscCode = favAsc?['code_unique'];
       if (matchProv.matches.isEmpty) matchProv.fetchMatches(auth, favAscCode);
       if (newsProv.news.isEmpty) newsProv.fetchNews(auth, favAscCode);
+
+      // Auto-refresh pour mettre à jour le score en direct
+      _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+        if (mounted) {
+          matchProv.fetchMatches(auth, favAscCode);
+        }
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer2<MatchProvider, NewsProvider>(
       builder: (context, matchProvider, newsProvider, child) {
-        final currentMatches = matchProvider.matches.where((m) => m.statut == 'EN_COURS' || m.statut == 'MI_TEMPS').toList();
+        final currentMatches = matchProvider.matches.where((m) => m.statut == 'EN_COURS' || m.statut == 'MI_TEMPS' || m.statut == 'DEUXIEME_MI_TEMPS').toList();
         final nextMatches = matchProvider.matches.where((m) => m.statut == 'A_VENIR' || m.statut == 'REPORTE').toList();
         final lastMatches = matchProvider.matches.where((m) => m.statut == 'TERMINE').toList();
         lastMatches.sort((a, b) => b.dateMatch.compareTo(a.dateMatch)); // desc
@@ -60,7 +76,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
             final favAsc = await DeviceService().getFavoriteAsc();
             final favAscCode = favAsc?['code_unique'];
             await matchProvider.fetchMatches(authProvider, favAscCode);
-            if (context.mounted) {
+            if (mounted) {
               await newsProvider.fetchNews(authProvider, favAscCode);
             }
           },
@@ -127,10 +143,12 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                 ...matchesToDisplay.map((match) => _buildMatchCard(match, authProvider)),
               ],
 
-              // Fil du Match (Timeline d'événements - affiché uniquement pour le premier match en cours si existant)
+              // Fil du Match (Timeline d'événements - affiché uniquement pour le match en cours ou terminé il y a moins de 24h)
               if (matchesToDisplay.isNotEmpty &&
                   (matchesToDisplay.first.statut == 'EN_COURS' ||
-                      matchesToDisplay.first.statut == 'MI_TEMPS')) ...[
+                   matchesToDisplay.first.statut == 'MI_TEMPS' ||
+                   matchesToDisplay.first.statut == 'DEUXIEME_MI_TEMPS' ||
+                   (matchesToDisplay.first.statut == 'TERMINE' && (matchesToDisplay.first.isToday || matchesToDisplay.first.isYesterday)))) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -230,7 +248,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
   }
 
   Widget _buildMatchCard(MatchGame match, AuthProvider authProvider) {
-    final isLive = match.statut == 'EN_COURS' || match.statut == 'MI_TEMPS';
+    final isLive = match.statut == 'EN_COURS' || match.statut == 'MI_TEMPS' || match.statut == 'DEUXIEME_MI_TEMPS';
     final isNext = match.statut == 'A_VENIR' || match.statut == 'REPORTE';
 
     return Padding(
@@ -252,8 +270,8 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: isLive
-                    ? [const Color(0xFF7B0000), const Color(0xFF1B0000)]
-                    : [const Color(0xFF0A5C36), const Color(0xFF0F8A4B)],
+                    ? [const Color(0xFF00C853), const Color(0xFF007E33)] // Vert vif pour le direct
+                    : [const Color(0xFF0A5C36), const Color(0xFF0F8A4B)], // Vert standard
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -273,7 +291,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                       decoration: BoxDecoration(
                         color: isLive 
-                            ? Colors.red 
+                            ? Colors.green[900] // Badge vert foncé au lieu de rouge
                             : (match.statut == 'REPORTE' ? Colors.orange : Colors.white.withValues(alpha: 0.2)),
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -286,7 +304,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                           ],
                           Text(
                             isLive
-                                ? (match.statut == 'MI_TEMPS' ? '⏸ MI-TEMPS' : '🔴 EN DIRECT')
+                                ? (match.statut == 'MI_TEMPS' ? '⏸ MI-TEMPS' : match.statut == 'DEUXIEME_MI_TEMPS' ? '🔴 2ème MT' : '🔴 1ère MT')
                                 : (match.statut == 'REPORTE' ? '⚠️ REPORTÉ' : (isNext ? '🗓 PROCHAIN MATCH' : '✅ DERNIER MATCH')),
                             style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                           ),
@@ -403,7 +421,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
           icon = Icons.pause_circle_filled;
           iconColor = Colors.amber[800]!;
         } else if (e.type == 'CARTON') {
-          title = '🟨 Carton';
+          title = '🟨 Carton${e.playerName != null ? " : ${e.playerName}" : ""}';
           icon = Icons.square;
           iconColor = Colors.amber;
         }

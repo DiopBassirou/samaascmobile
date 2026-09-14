@@ -203,7 +203,7 @@ class _BureauTabState extends State<BureauTab> {
                     ),
                     const SizedBox(height: 20),
                     DropdownButtonFormField<int>(
-                      value: selectedRoleId,
+                      initialValue: selectedRoleId,
                       decoration: InputDecoration(
                         labelText: 'Rôle',
                         prefixIcon: const Icon(Icons.badge, color: Color(0xFF0A5C36)),
@@ -243,7 +243,7 @@ class _BureauTabState extends State<BureauTab> {
                     
                     try {
                       await bureauProvider.assignRole(authProvider, searchController.text.trim(), selectedRoleId);
-                      if (context.mounted) {
+                      if (mounted) {
                         Navigator.pop(dialogContext);
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Rôle assigné avec succès !'), backgroundColor: Colors.green));
                         
@@ -251,7 +251,7 @@ class _BureauTabState extends State<BureauTab> {
                         }
                       }
                     } catch (e) {
-                      if (context.mounted) {
+                      if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red));
                       }
                     } finally {

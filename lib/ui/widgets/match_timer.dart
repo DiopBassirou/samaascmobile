@@ -5,7 +5,7 @@ import '../../models/match_model.dart';
 class MatchTimer extends StatefulWidget {
   final MatchGame match;
 
-  const MatchTimer({Key? key, required this.match}) : super(key: key);
+  const MatchTimer({super.key, required this.match});
 
   @override
   State<MatchTimer> createState() => _MatchTimerState();

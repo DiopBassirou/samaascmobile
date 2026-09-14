@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/classement_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../widgets/team_logo.dart';
+import 'quarter_finals_screen.dart';
 
 class ClassementTab extends StatefulWidget {
   const ClassementTab({super.key});
@@ -178,11 +179,51 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: dates.length,
-      itemBuilder: (context, index) {
-        final dateGroup = dates[index];
+    return Column(
+      children: [
+        // Bouton Prédictions / Simulateur
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const QuarterFinalsScreen()),
+              );
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Colors.amber, Colors.orange]),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(color: Colors.orange.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.emoji_events, color: Colors.white, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Cliquez ici pour les prédictions 1/4 finale',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_ios, color: Colors.white, size: 12),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Liste des matchs
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            itemCount: dates.length,
+            itemBuilder: (context, index) {
+              final dateGroup = dates[index];
         final label = dateGroup['label'] ?? '';
         final dateStr = dateGroup['date'] ?? '';
         final matches = List<Map<String, dynamic>>.from(dateGroup['matches'] ?? []);
@@ -266,14 +307,17 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
             const SizedBox(height: 8),
           ],
         );
-      },
-    );
-  }
+          },
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _buildMatchRow(Map<String, dynamic> m) {
     final statut = m['statut'] ?? 'A_VENIR';
     final isTermine = statut == 'TERMINE';
-    final isLive = statut == 'EN_COURS' || statut == 'MI_TEMPS';
+    final isLive = statut == 'EN_COURS' || statut == 'MI_TEMPS' || statut == 'DEUXIEME_MI_TEMPS';
     final isAVenir = statut == 'A_VENIR' || statut == 'REPORTE';
     final categorie = m['categorie'] ?? 'SENIOR';
 
@@ -335,18 +379,30 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
                       statut == 'REPORTE' ? 'Reporté' : _formatTime(m['date_match']),
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: statut == 'REPORTE' ? 11 : 12, color: statut == 'REPORTE' ? Colors.orange : Colors.grey[600]),
                     )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (isLive) Container(width: 6, height: 6, margin: const EdgeInsets.only(right: 4), decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle)),
-                        Text(
-                          '${m['score_home'] ?? 0} - ${m['score_away'] ?? 0}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: isLive ? Colors.red : const Color(0xFF1B5E20),
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isLive) Container(width: 6, height: 6, margin: const EdgeInsets.only(right: 4), decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle)),
+                            Text(
+                              '${m['score_home'] ?? 0} - ${m['score_away'] ?? 0}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: isLive ? Colors.red : const Color(0xFF1B5E20),
+                              ),
+                            ),
+                          ],
                         ),
+                        if (isLive) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            statut == 'MI_TEMPS' ? 'MI-TEMPS' : statut == 'DEUXIEME_MI_TEMPS' ? '2ème MT' : '1ère MT',
+                            style: const TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ]
                       ],
                     ),
             ),
@@ -456,6 +512,30 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
+        if (_selectedCategorie == 'SENIOR' || _selectedCategorie.isEmpty)
+          GestureDetector(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const QuarterFinalsScreen()));
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFFF57F17), Color(0xFFF9A825)]),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.orange.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: Colors.white),
+                  SizedBox(width: 12),
+                  Text('Prédictions 1/4 Finale (Seniors)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                  Spacer(),
+                  Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
+                ],
+              ),
+            ),
+          ),
         ...filteredZones.map((zoneEntry) {
           final zoneName = zoneEntry.key;
           final categories = zoneEntry.value as Map<String, dynamic>;

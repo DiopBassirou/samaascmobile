@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../providers/poule_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../services/asc_service.dart';
+import '../../../models/match_model.dart';
+import 'super_admin_live_screen.dart';
 
 class SuperAdminMatchesTab extends StatefulWidget {
   const SuperAdminMatchesTab({super.key});
@@ -200,7 +202,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                     title: const Text('Match déjà joué ? (Score direct)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     subtitle: const Text('Activez pour saisir le score final maintenant'),
                     value: _hasScore,
-                    activeColor: const Color(0xFF0A5C36),
+                    activeThumbColor: const Color(0xFF0A5C36),
                     onChanged: (val) => setState(() => _hasScore = val),
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -321,7 +323,10 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                         trailing: PopupMenuButton<String>(
                           icon: const Icon(Icons.more_vert),
                           onSelected: (val) async {
-                            if (val == 'edit') {
+                            if (val == 'live') {
+                              final matchModel = MatchGame.fromJson(match);
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => SuperAdminLiveScreen(match: matchModel)));
+                            } else if (val == 'edit') {
                               _showEditMatchDialog(match);
                             } else if (val == 'delete') {
                               try {
@@ -338,6 +343,11 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                             }
                           },
                           itemBuilder: (ctx) => [
+                            if (match['statut'] != 'TERMINE' && match['statut'] != 'REPORTE')
+                              const PopupMenuItem(
+                                value: 'live',
+                                child: Row(children: [Icon(Icons.live_tv, color: Colors.orange, size: 20), SizedBox(width: 8), Text('Gérer le Direct', style: TextStyle(color: Colors.orange))]),
+                              ),
                             const PopupMenuItem(
                               value: 'edit',
                               child: Row(children: [Icon(Icons.edit, color: Colors.blue, size: 20), SizedBox(width: 8), Text('Modifier', style: TextStyle(color: Colors.blue))]),
@@ -425,7 +435,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     final scoreBController = TextEditingController(text: (match['score_adv'] ?? 0).toString());
     
     // Statut modifiable
-    const statuts = ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'TERMINE', 'REPORTE'];
+    const statuts = ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'DEUXIEME_MI_TEMPS', 'TERMINE', 'REPORTE'];
     String matchStatut = statuts.contains(match['statut']) ? match['statut'] : 'A_VENIR';
     
     bool isLoading = false;
@@ -463,7 +473,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                 // Equipes
                 if (allTeams.isNotEmpty) ...[
                   DropdownButtonFormField<int>(
-                    value: teamAId,
+                    initialValue: teamAId,
                     decoration: InputDecoration(labelText: 'Équipe A', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                     items: allTeams.map((t) => DropdownMenuItem<int>(
                       value: t['id'] as int,
@@ -473,7 +483,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<int>(
-                    value: teamBId,
+                    initialValue: teamBId,
                     decoration: InputDecoration(labelText: 'Équipe B', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                     items: allTeams.where((t) => t['id'] != teamAId).map((t) => DropdownMenuItem<int>(
                       value: t['id'] as int,
@@ -521,7 +531,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                 const SizedBox(height: 16),
                 // Phase
                 DropdownButtonFormField<String>(
-                  value: _phases.contains(matchPhase) ? matchPhase : 'Phase de Groupes',
+                  initialValue: _phases.contains(matchPhase) ? matchPhase : 'Phase de Groupes',
                   decoration: InputDecoration(labelText: 'Phase', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                   items: _phases.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
                   onChanged: (val) => setStateDialog(() => matchPhase = val!),
@@ -529,10 +539,10 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                 const SizedBox(height: 16),
                 // Statut
                 DropdownButtonFormField<String>(
-                  value: matchStatut,
+                  initialValue: matchStatut,
                   decoration: InputDecoration(labelText: 'Statut', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                   items: statuts.map((s) => DropdownMenuItem(value: s, child: Text(
-                    s == 'A_VENIR' ? 'A venir' : s == 'EN_COURS' ? 'En cours' : s == 'MI_TEMPS' ? 'Mi-temps' : s == 'REPORTE' ? 'Reporté' : 'Terminé',
+                    s == 'A_VENIR' ? 'A venir' : s == 'EN_COURS' ? 'En cours (1ère MT)' : s == 'MI_TEMPS' ? 'Mi-temps' : s == 'DEUXIEME_MI_TEMPS' ? 'En cours (2ème MT)' : s == 'REPORTE' ? 'Reporté' : 'Terminé',
                   ))).toList(),
                   onChanged: (val) => setStateDialog(() => matchStatut = val!),
                 ),
@@ -660,7 +670,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     return Container(
       decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey[300]!)),
       child: DropdownButtonFormField<T>(
-        value: value,
+        initialValue: value,
         isExpanded: true,
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: const Color(0xFF0A5C36)),

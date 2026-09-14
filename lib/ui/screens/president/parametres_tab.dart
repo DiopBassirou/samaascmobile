@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -145,9 +144,9 @@ class _ParametresTabState extends State<ParametresTab> {
               final ascProvider = Provider.of<AscProvider>(context, listen: false);
               try {
                 await ascProvider.updateSettings(nomCtrl.text, villeCtrl.text, zoneCtrl.text, currentCotisation);
-                if (context.mounted) Navigator.pop(ctx);
+                if (mounted) Navigator.pop(ctx);
               } catch (e) {
-                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
               }
             },
             child: const Text('Enregistrer'),
@@ -178,9 +177,9 @@ class _ParametresTabState extends State<ParametresTab> {
               final ascProvider = Provider.of<AscProvider>(context, listen: false);
               try {
                 await ascProvider.updateSettings(currentNom, currentVille, currentZone, int.parse(cotisCtrl.text));
-                if (context.mounted) Navigator.pop(ctx);
+                if (mounted) Navigator.pop(ctx);
               } catch (e) {
-                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
               }
             },
             child: const Text('Enregistrer'),
@@ -194,14 +193,14 @@ class _ParametresTabState extends State<ParametresTab> {
     final picker = ImagePicker();
     final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      if (context.mounted) {
+      if (mounted) {
         final ascProvider = Provider.of<AscProvider>(context, listen: false);
         try {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Upload en cours...')));
           await ascProvider.uploadLogo(pickedFile);
-          if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Logo mis à jour !'), backgroundColor: Colors.green));
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Logo mis à jour !'), backgroundColor: Colors.green));
         } catch (e) {
-          if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
         }
       }
     }

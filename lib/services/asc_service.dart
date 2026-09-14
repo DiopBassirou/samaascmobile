@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -403,6 +402,43 @@ class AscService {
       return List<Map<String, dynamic>>.from(jsonDecode(utf8.decode(response.bodyBytes)));
     } else {
       throw Exception('Erreur de chargement des matchs');
+    }
+  }
+
+  /// Récupère les prédictions des 1/4 de finale
+  Future<Map<String, dynamic>> getQuarterFinalsPrediction() async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/predictions/quarter-finals'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Erreur lors du chargement des prédictions');
+    }
+  }
+
+  Future<Map<String, dynamic>> simulatePredictions(List<Map<String, dynamic>> simulatedMatches) async {
+    final token = await _getToken();
+    final response = await http.post(
+      Uri.parse('$_baseUrl/predictions/simulate'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'matches': simulatedMatches}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Erreur lors du chargement de la simulation');
     }
   }
 }

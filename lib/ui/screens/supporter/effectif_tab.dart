@@ -48,7 +48,7 @@ class _EffectifTabState extends State<EffectifTab> {
 
         // Sort players by position category
         playersToDisplay.sort((a, b) {
-          int _categoryOrder(String poste) {
+          int categoryOrder(String poste) {
             final lower = poste.toLowerCase();
             if (lower.contains('gardien') || lower == 'gk') return 1;
             if (lower.contains('défenseur') || lower.contains('defenseur') || lower.contains('latéral') || lower.contains('lateral') || lower.contains('libéro') || lower.contains('libero')) return 2;
@@ -56,7 +56,7 @@ class _EffectifTabState extends State<EffectifTab> {
             if (lower.contains('attaquant') || lower.contains('ailier') || lower.contains('avant-centre') || lower.contains('pointe')) return 4;
             return 99;
           }
-          return _categoryOrder(a.poste).compareTo(_categoryOrder(b.poste));
+          return categoryOrder(a.poste).compareTo(categoryOrder(b.poste));
         });
 
         return SingleChildScrollView(

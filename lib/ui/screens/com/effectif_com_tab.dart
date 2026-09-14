@@ -135,7 +135,7 @@ class _EffectifComTabState extends State<EffectifComTab> {
                           final playerProv = Provider.of<PlayerProvider>(context, listen: false);
                           await playerProv.addPlayer(authProv, name, selectedPoste);
 
-                          if (context.mounted) {
+                          if (mounted) {
                             Navigator.pop(ctx);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -146,7 +146,7 @@ class _EffectifComTabState extends State<EffectifComTab> {
                           }
                         } catch (e) {
                           setDialogState(() => isSaving = false);
-                          if (context.mounted) {
+                          if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Erreur lors de l\'ajout : $e'), backgroundColor: Colors.red),
                             );
@@ -335,10 +335,10 @@ class _EffectifComTabState extends State<EffectifComTab> {
               setState(() => _isSubmitting = true);
               try {
                 await convoProv.submit(targetMatch.id);
-                if (context.mounted) {
+                if (mounted) {
                   final authProv = Provider.of<AuthProvider>(context, listen: false);
                   await Provider.of<PlayerProvider>(context, listen: false).fetchPlayers(authProv);
-                  if (!context.mounted) return;
+                  if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Effectif publié avec succès !', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
                   
                   // Auto-switch to next tab
@@ -349,7 +349,7 @@ class _EffectifComTabState extends State<EffectifComTab> {
                   });
                 }
               } catch (e) {
-                if (context.mounted) {
+                if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur réseau. Veuillez réessayer. Détails: $e'), backgroundColor: Colors.red));
                 }
               } finally {
