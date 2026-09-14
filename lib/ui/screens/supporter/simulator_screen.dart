@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../services/asc_service.dart';
 import '../../../providers/match_provider.dart';
 import '../../widgets/team_logo.dart';
@@ -36,7 +37,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   Future<void> _fetchRemainingMatches() async {
     setState(() => _isLoading = true);
     try {
-      final apiUrl = const String.fromEnvironment('API_BASE_URL', defaultValue: 'http://127.0.0.1:8000/api');
+      final apiUrl = dotenv.env['API_BASE_URL'] ?? dotenv.env['API_URL'] ?? 'http://127.0.0.1:8000/api';
       final response = await http.get(Uri.parse('$apiUrl/all-matches'));
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
@@ -61,9 +62,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         });
       }
     } catch (e) {
-      debugPrint(e.toString());
+      debugPrint('Simulation error: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
