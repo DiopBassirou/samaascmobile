@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../services/asc_service.dart';
 import '../../../providers/match_provider.dart';
@@ -24,15 +24,19 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final matchProv = Provider.of<MatchProvider>(context, listen: false);
+      setState(() => _isLoading = true);
+      // Forcer le rechargement de TOUS les matchs (sans asc_code)
+      await matchProv.fetchMatches();
+      
       final remainingMatches = matchProv.matches.where((m) => m.categorie == 'SENIOR' && ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'DEUXIEME_MI_TEMPS'].contains(m.statut)).toList();
       
       for (var m in remainingMatches) {
         _scoreAControllers[m.id] = TextEditingController(text: (m.scoreAsc ?? 0).toString());
         _scoreBControllers[m.id] = TextEditingController(text: (m.scoreAdv ?? 0).toString());
       }
-      setState((){});
+      setState(() => _isLoading = false);
     });
   }
 
