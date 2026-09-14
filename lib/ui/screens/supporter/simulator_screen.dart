@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../../services/asc_service.dart';
 import '../../../providers/match_provider.dart';
 import '../../widgets/team_logo.dart';
@@ -21,23 +23,48 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   final Map<int, TextEditingController> _scoreAControllers = {};
   final Map<int, TextEditingController> _scoreBControllers = {};
 
+  List<dynamic> _remainingMatches = [];
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final matchProv = Provider.of<MatchProvider>(context, listen: false);
-      setState(() => _isLoading = true);
-      // Forcer le rechargement de TOUS les matchs (sans asc_code)
-      await matchProv.fetchMatches();
-      
-      final remainingMatches = matchProv.matches.where((m) => m.categorie == 'SENIOR' && ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'DEUXIEME_MI_TEMPS'].contains(m.statut)).toList();
-      
-      for (var m in remainingMatches) {
-        _scoreAControllers[m.id] = TextEditingController(text: (m.scoreAsc ?? 0).toString());
-        _scoreBControllers[m.id] = TextEditingController(text: (m.scoreAdv ?? 0).toString());
-      }
-      setState(() => _isLoading = false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchRemainingMatches();
     });
+  }
+
+  Future<void> _fetchRemainingMatches() async {
+    setState(() => _isLoading = true);
+    try {
+      final apiUrl = const String.fromEnvironment('API_BASE_URL', defaultValue: 'http://127.0.0.1:8000/api');
+      final response = await http.get(Uri.parse('$apiUrl/all-matches'));
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final dates = data['dates'] ?? [];
+        List<dynamic> allMatches = [];
+        for (var d in dates) {
+          allMatches.addAll(d['matches'] ?? []);
+        }
+
+        final remainingMatches = allMatches.where((m) => 
+          m['categorie'] == 'SENIOR' && 
+          ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'DEUXIEME_MI_TEMPS'].contains(m['statut'])
+        ).toList();
+
+        for (var m in remainingMatches) {
+          _scoreAControllers[m['id']] = TextEditingController(text: (m['score_home'] ?? 0).toString());
+          _scoreBControllers[m['id']] = TextEditingController(text: (m['score_away'] ?? 0).toString());
+        }
+
+        setState(() {
+          _remainingMatches = remainingMatches;
+        });
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -76,10 +103,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   }
 
   Widget _buildSimulationForm() {
-    final matchProv = Provider.of<MatchProvider>(context);
-    final remainingMatches = matchProv.matches.where((m) => m.categorie == 'SENIOR' && ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'DEUXIEME_MI_TEMPS'].contains(m.statut)).toList();
-
-    if (remainingMatches.isEmpty) {
+    if (_remainingMatches.isEmpty) {
       return const Center(child: Padding(
         padding: EdgeInsets.all(16.0),
         child: Text('Tous les matchs de poules sont terminés !', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -96,22 +120,22 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: remainingMatches.length,
+          itemCount: _remainingMatches.length,
           itemBuilder: (ctx, i) {
-            final m = remainingMatches[i];
-            if(!_scoreAControllers.containsKey(m.id)) return const SizedBox();
+            final m = _remainingMatches[i];
+            if(!_scoreAControllers.containsKey(m['id'])) return const SizedBox();
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Row(
                   children: [
-                    Expanded(child: Text(m.teamAName, textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
+                    Expanded(child: Text(m['home'] ?? 'Equipe A', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
                     const SizedBox(width: 8),
                     SizedBox(
                       width: 40,
                       child: TextField(
-                        controller: _scoreAControllers[m.id],
+                        controller: _scoreAControllers[m['id']],
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
                         decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.zero),
@@ -124,14 +148,14 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                     SizedBox(
                       width: 40,
                       child: TextField(
-                        controller: _scoreBControllers[m.id],
+                        controller: _scoreBControllers[m['id']],
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
                         decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.zero),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(m.teamBName, style: const TextStyle(fontWeight: FontWeight.bold))),
+                    Expanded(child: Text(m['away'] ?? 'Equipe B', style: const TextStyle(fontWeight: FontWeight.bold))),
                   ],
                 ),
               ),
