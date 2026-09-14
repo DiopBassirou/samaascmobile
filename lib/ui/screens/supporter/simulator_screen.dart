@@ -48,8 +48,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         }
 
         final remainingMatches = allMatches.where((m) => 
-          m['categorie'] == 'SENIOR' && 
-          ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'DEUXIEME_MI_TEMPS'].contains(m['statut'])
+          m['categorie'] != 'CADET' &&
+          ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'DEUXIEME_MI_TEMPS', 'REPORTE', 'PROGRAMME'].contains(m['statut'])
         ).toList();
 
         for (var m in remainingMatches) {
