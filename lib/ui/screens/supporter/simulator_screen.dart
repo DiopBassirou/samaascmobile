@@ -131,7 +131,16 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 padding: const EdgeInsets.all(12.0),
                 child: Row(
                   children: [
-                    Expanded(child: Text(m['home'] ?? 'Equipe A', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Flexible(child: Text(m['home'] ?? 'Equipe A', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+                          const SizedBox(width: 8),
+                          if (m['home_logo'] != null) TeamLogo(teamName: m['home'], logoUrl: m['home_logo'], fallbackColor: Colors.grey, size: 24) else const Icon(Icons.shield, size: 24, color: Colors.grey),
+                        ],
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     SizedBox(
                       width: 40,
@@ -156,7 +165,15 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(m['away'] ?? 'Equipe B', style: const TextStyle(fontWeight: FontWeight.bold))),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          if (m['away_logo'] != null) TeamLogo(teamName: m['away'], logoUrl: m['away_logo'], fallbackColor: Colors.grey, size: 24) else const Icon(Icons.shield, size: 24, color: Colors.grey),
+                          const SizedBox(width: 8),
+                          Flexible(child: Text(m['away'] ?? 'Equipe B', style: const TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -345,23 +362,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         : SingleChildScrollView(
             child: Column(
               children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  color: Colors.amber.withValues(alpha: 0.1),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.amber, size: 24),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          "Ceci est une simulation virtuelle. Les scores que vous entrez ici ne modifient pas la vraie base de données.",
-                          style: TextStyle(color: Colors.brown, fontSize: 13, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                 _buildSimulationForm(),
                 _buildSimulatedResults(),
               ],
