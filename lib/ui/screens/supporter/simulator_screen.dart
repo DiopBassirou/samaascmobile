@@ -8,7 +8,8 @@ import '../../../providers/match_provider.dart';
 import '../../widgets/team_logo.dart';
 
 class SimulatorScreen extends StatefulWidget {
-  const SimulatorScreen({super.key});
+  final String category;
+  const SimulatorScreen({super.key, this.category = 'SENIOR'});
 
   @override
   State<SimulatorScreen> createState() => _SimulatorScreenState();
@@ -48,7 +49,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         }
 
         final remainingMatches = allMatches.where((m) => 
-          m['categorie'] != 'CADET' &&
+          m['categorie'] == widget.category &&
           ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'DEUXIEME_MI_TEMPS', 'REPORTE', 'PROGRAMME'].contains(m['statut'])
         ).toList();
 
@@ -87,7 +88,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         });
       }
 
-      final res = await _ascService.simulatePredictions(simulatedMatches);
+      final res = await _ascService.simulatePredictions(simulatedMatches, widget.category);
       if (res['predictions']?['error'] != null) {
         throw Exception(res['predictions']['error']);
       }
@@ -352,7 +353,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Simulateur 1/4 Finale', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Simulateur 1/4 Finale (${widget.category})', style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.amber[700],
         foregroundColor: Colors.white,
         elevation: 0,

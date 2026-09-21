@@ -4,7 +4,8 @@ import '../../widgets/team_logo.dart';
 import 'simulator_screen.dart';
 
 class QuarterFinalsScreen extends StatefulWidget {
-  const QuarterFinalsScreen({super.key});
+  final String category;
+  const QuarterFinalsScreen({super.key, this.category = 'SENIOR'});
 
   @override
   State<QuarterFinalsScreen> createState() => _QuarterFinalsScreenState();
@@ -24,7 +25,7 @@ class _QuarterFinalsScreenState extends State<QuarterFinalsScreen> {
 
   Future<void> _fetchPredictions() async {
     try {
-      final res = await _ascService.getQuarterFinalsPrediction();
+      final res = await _ascService.getQuarterFinalsPrediction(widget.category);
       if (res['error'] != null) {
         setState(() {
           _error = res['error'];
@@ -161,7 +162,7 @@ class _QuarterFinalsScreenState extends State<QuarterFinalsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Prédictions 1/4 Finale', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Prédictions 1/4 Finale (${widget.category})', style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF0A5C36),
         foregroundColor: Colors.white,
         elevation: 0,
@@ -170,7 +171,7 @@ class _QuarterFinalsScreenState extends State<QuarterFinalsScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const SimulatorScreen()),
+            MaterialPageRoute(builder: (context) => SimulatorScreen(category: widget.category)),
           );
         },
         backgroundColor: Colors.amber[700],

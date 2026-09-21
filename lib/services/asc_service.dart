@@ -406,10 +406,10 @@ class AscService {
   }
 
   /// Récupère les prédictions des 1/4 de finale
-  Future<Map<String, dynamic>> getQuarterFinalsPrediction() async {
+  Future<Map<String, dynamic>> getQuarterFinalsPrediction(String category) async {
     final token = await _getToken();
     final response = await http.get(
-      Uri.parse('$_baseUrl/predictions/quarter-finals'),
+      Uri.parse('$_baseUrl/predictions/quarter-finals?category=$category'),
       headers: {
         'Accept': 'application/json',
         'Authorization': 'Bearer $token',
@@ -423,10 +423,10 @@ class AscService {
     }
   }
 
-  Future<Map<String, dynamic>> simulatePredictions(List<Map<String, dynamic>> simulatedMatches) async {
+  Future<Map<String, dynamic>> simulatePredictions(List<Map<String, dynamic>> simulatedMatches, String category) async {
     final token = await _getToken();
     final response = await http.post(
-      Uri.parse('$_baseUrl/predictions/simulate'),
+      Uri.parse('$_baseUrl/predictions/simulate?category=$category'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',

@@ -188,7 +188,7 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const QuarterFinalsScreen()),
+                MaterialPageRoute(builder: (context) => QuarterFinalsScreen(category: _selectedCategorie == 'CADET' ? 'CADET' : 'SENIOR')),
               );
             },
             borderRadius: BorderRadius.circular(12),
@@ -201,17 +201,17 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
                   BoxShadow(color: Colors.orange.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.emoji_events, color: Colors.white, size: 20),
-                  SizedBox(width: 8),
+                  const Icon(Icons.emoji_events, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
                   Text(
-                    'Cliquez ici pour les prédictions 1/4 finale',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    _selectedCategorie == 'CADET' ? 'Prédictions 1/4 finale (CADETS)' : 'Prédictions 1/4 finale (SENIORS)',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
-                  SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_ios, color: Colors.white, size: 12),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 12),
                 ],
               ),
             ),
@@ -515,7 +515,7 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
         if (_selectedCategorie == 'SENIOR' || _selectedCategorie.isEmpty)
           GestureDetector(
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const QuarterFinalsScreen()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const QuarterFinalsScreen(category: 'SENIOR')));
             },
             child: Container(
               margin: const EdgeInsets.only(bottom: 16),
@@ -530,6 +530,30 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
                   Icon(Icons.auto_awesome, color: Colors.white),
                   SizedBox(width: 12),
                   Text('Prédictions 1/4 Finale (Seniors)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                  Spacer(),
+                  Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
+                ],
+              ),
+            ),
+          ),
+        if (_selectedCategorie == 'CADET' || _selectedCategorie.isEmpty)
+          GestureDetector(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const QuarterFinalsScreen(category: 'CADET')));
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFF0F8A4B), Color(0xFF0A5C36)]),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.green.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: Colors.white),
+                  SizedBox(width: 12),
+                  Text('Prédictions 1/4 Finale (Cadets)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
                   Spacer(),
                   Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
                 ],
