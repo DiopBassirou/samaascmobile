@@ -191,13 +191,15 @@ class _MainShellState extends State<MainShell> {
             SuperAdminStatsTab(),
             AscListTab(),
             SuperAdminMatchesTab(),
+            ClassementTab(),
             PoulesAdminTab(),
           ],
           'navItems': const [
             BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Stats'),
-            BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'Gestion ASC'),
+            BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'ASC'),
             BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Matchs'),
-            BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Poules'),
+            BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Classement'),
+            BottomNavigationBarItem(icon: Icon(Icons.workspaces), label: 'Poules'),
           ],
         };
 

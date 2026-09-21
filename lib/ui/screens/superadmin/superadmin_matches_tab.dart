@@ -313,59 +313,308 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                 else
                   ...displayedMatches.map((m) {
                     final match = m['match'] ?? m;
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        leading: const CircleAvatar(backgroundColor: Color(0xFF0A5C36), child: Icon(Icons.sports_soccer, color: Colors.white, size: 20)),
-                        title: Text('${match['asc_code'] ?? '?'} vs ${match['opponent']?['nom_equipe'] ?? '?'}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('${match['statut'] ?? ''} — ${match['score_asc'] ?? 0} : ${match['score_adv'] ?? 0}'),
-                        trailing: PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_vert),
-                          onSelected: (val) async {
-                            if (val == 'live') {
-                              final matchModel = MatchGame.fromJson(match);
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => SuperAdminLiveScreen(match: matchModel)));
-                            } else if (val == 'edit') {
-                              _showEditMatchDialog(match);
-                            } else if (val == 'delete') {
-                              try {
-                                await _ascService.deleteSuperAdminMatch(match['id']);
-                                setState(() {
-                                  _allMatches.removeWhere((element) => element['id'] == match['id']);
-                                });
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Match supprimé avec succès'), backgroundColor: Colors.green));
-                              } catch (e) {
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
-                              }
-                            }
-                          },
-                          itemBuilder: (ctx) => [
-                            if (match['statut'] != 'TERMINE' && match['statut'] != 'REPORTE')
-                              const PopupMenuItem(
-                                value: 'live',
-                                child: Row(children: [Icon(Icons.live_tv, color: Colors.orange, size: 20), SizedBox(width: 8), Text('Gérer le Direct', style: TextStyle(color: Colors.orange))]),
-                              ),
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Row(children: [Icon(Icons.edit, color: Colors.blue, size: 20), SizedBox(width: 8), Text('Modifier', style: TextStyle(color: Colors.blue))]),
-                            ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Row(children: [Icon(Icons.delete, color: Colors.red, size: 20), SizedBox(width: 8), Text('Supprimer', style: TextStyle(color: Colors.red))]),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
+                    return _buildMatchCard(match);
                   }),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMatchCard(Map<String, dynamic> match) {
+    final statut = match['statut'] ?? 'A_VENIR';
+    final isTermine = statut == 'TERMINE';
+    final isLive = statut == 'EN_COURS' || statut == 'MI_TEMPS' || statut == 'DEUXIEME_MI_TEMPS';
+    final isReporte = statut == 'REPORTE';
+
+    // Noms des équipes
+    final String homeTeam = match['asc']?['nom'] ?? match['asc_code'] ?? '?';
+    final String awayTeam = match['opponent']?['nom_equipe'] ?? match['opponent']?['asc']?['nom'] ?? '?';
+    
+    // Logos
+    final String? homeLogo = match['asc']?['logo_url'];
+    final String? awayLogo = match['opponent']?['logo'] ?? match['opponent']?['asc']?['logo_url'];
+
+    // Date
+    String dateLabel = '';
+    String timeLabel = '';
+    if (match['date_match'] != null) {
+      try {
+        final dt = DateTime.parse(match['date_match']);
+        dateLabel = '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+        timeLabel = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      } catch (_) {}
+    }
+
+    // Couleur et label du statut
+    Color statutColor;
+    String statutLabel;
+    if (isTermine) {
+      statutColor = const Color(0xFF0A5C36);
+      statutLabel = 'Terminé';
+    } else if (isLive) {
+      statutColor = Colors.red;
+      statutLabel = statut == 'MI_TEMPS' ? 'Mi-temps' : statut == 'DEUXIEME_MI_TEMPS' ? '2ème MT' : 'En cours';
+    } else if (isReporte) {
+      statutColor = Colors.orange[800]!;
+      statutLabel = 'Reporté';
+    } else {
+      statutColor = Colors.blue;
+      statutLabel = 'Programmé';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        children: [
+          // ─── Header : Statut + Phase + Date ───
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: statutColor.withValues(alpha: 0.08),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              children: [
+                // Badge statut
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statutColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isLive) ...[
+                        Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+                        const SizedBox(width: 4),
+                      ],
+                      Text(statutLabel, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Phase
+                if (match['phase'] != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(match['phase'], style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey[700])),
+                  ),
+                const Spacer(),
+                // Date + Heure
+                if (dateLabel.isNotEmpty)
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 12, color: Colors.grey[500]),
+                      const SizedBox(width: 4),
+                      Text('$dateLabel  $timeLabel', style: TextStyle(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+
+          // ─── Corps : Équipes + Score ───
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                // Équipe A (Home)
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      _teamLogo(homeTeam, homeLogo, const Color(0xFF0A5C36)),
+                      const SizedBox(height: 8),
+                      Text(
+                        homeTeam,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                // Score
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: isLive
+                          ? Colors.red.withValues(alpha: 0.08)
+                          : isTermine
+                              ? const Color(0xFF0A5C36).withValues(alpha: 0.06)
+                              : Colors.grey[50],
+                      borderRadius: BorderRadius.circular(14),
+                      border: isLive ? Border.all(color: Colors.red.withValues(alpha: 0.3), width: 1.5) : null,
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          '${match['score_asc'] ?? 0} - ${match['score_adv'] ?? 0}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 22,
+                            color: isLive ? Colors.red : isTermine ? const Color(0xFF1B5E20) : Colors.grey[400],
+                          ),
+                        ),
+                        if (isLive)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(statutLabel, style: const TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold)),
+                          ),
+                        if (!isTermine && !isLive && timeLabel.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(timeLabel, style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w600)),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Équipe B (Away)
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      _teamLogo(awayTeam, awayLogo, const Color(0xFFC62828)),
+                      const SizedBox(height: 8),
+                      Text(
+                        awayTeam,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ─── Footer : Lieu + Actions ───
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+            ),
+            child: Row(
+              children: [
+                // Lieu
+                if (match['lieu'] != null && match['lieu'].toString().isNotEmpty) ...[
+                  Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      match['lieu'],
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ] else
+                  const Spacer(),
+                // Boutons d'action
+                if (statut != 'TERMINE' && statut != 'REPORTE')
+                  _actionButton(Icons.live_tv, 'Live', Colors.orange, () {
+                    final matchModel = MatchGame.fromJson(match);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => SuperAdminLiveScreen(match: matchModel)));
+                  }),
+                const SizedBox(width: 6),
+                _actionButton(Icons.edit, 'Modifier', Colors.blue, () => _showEditMatchDialog(match)),
+                const SizedBox(width: 6),
+                _actionButton(Icons.delete_outline, 'Suppr.', Colors.red, () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Supprimer ce match ?'),
+                      content: Text('$homeTeam vs $awayTeam'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Supprimer'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    try {
+                      await _ascService.deleteSuperAdminMatch(match['id']);
+                      setState(() {
+                        _allMatches.removeWhere((element) => element['id'] == match['id']);
+                      });
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Match supprimé'), backgroundColor: Colors.green));
+                    } catch (e) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+                    }
+                  }
+                }),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _teamLogo(String name, String? logoUrl, Color fallbackColor) {
+    if (logoUrl != null && logoUrl.isNotEmpty) {
+      return CircleAvatar(
+        radius: 24,
+        backgroundColor: Colors.grey[100],
+        backgroundImage: NetworkImage(logoUrl),
+      );
+    }
+    // Fallback : initiales dans un cercle
+    final initials = name.length >= 2 ? name.substring(0, 2).toUpperCase() : name.toUpperCase();
+    return CircleAvatar(
+      radius: 24,
+      backgroundColor: fallbackColor.withValues(alpha: 0.12),
+      child: Text(initials, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: fallbackColor)),
+    );
+  }
+
+  Widget _actionButton(IconData icon, String label, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
+          ],
+        ),
+      ),
     );
   }
 
