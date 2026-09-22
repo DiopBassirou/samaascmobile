@@ -4,6 +4,7 @@ import '../../../providers/poule_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../services/asc_service.dart';
 import '../../../models/match_model.dart';
+import '../../../providers/match_provider.dart';
 import 'super_admin_live_screen.dart';
 
 class SuperAdminMatchesTab extends StatefulWidget {
@@ -737,7 +738,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                         backgroundColor: isAsc ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
                       ),
                     );
-                    _loadMatches(); // Refresh the list
+                    _fetchMatches(); // Refresh the list
                   }
                 } catch (e) {
                   if (mounted) {
