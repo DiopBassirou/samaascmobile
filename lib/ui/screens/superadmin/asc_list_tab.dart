@@ -256,16 +256,164 @@ class _AscListTabState extends State<AscListTab> {
             ),
             const Divider(),
             ListTile(
-              leading: CircleAvatar(backgroundColor: Colors.orange.shade100, child: Icon(Icons.person, color: Colors.orange.shade700)),
+              leading: CircleAvatar(backgroundColor: Colors.orange.shade100, child: Icon(Icons.workspace_premium, color: Colors.orange.shade700)),
               title: const Text('Nommer Président', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Bientôt disponible'),
-              enabled: false,
-              onTap: () {},
+              subtitle: Text(asc['president'] != null ? 'Actuel: ${asc['president']?['prenom'] ?? ''} ${asc['president']?['nom'] ?? ''}' : 'Aucun président assigné'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showAssignPresidentDialog(asc);
+              },
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _showAssignPresidentDialog(Map<String, dynamic> asc) {
+    final codeUnique = asc['code_unique'] as String;
+    bool isLoadingUsers = true;
+    List<Map<String, dynamic>> users = [];
+    int? selectedUserId;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          // Charger les utilisateurs au premier rendu
+          if (isLoadingUsers && users.isEmpty) {
+            _ascService.getAscUsers(codeUnique).then((result) {
+              setStateDialog(() {
+                users = result;
+                isLoadingUsers = false;
+              });
+            }).catchError((e) {
+              setStateDialog(() => isLoadingUsers = false);
+            });
+          }
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                Icon(Icons.workspace_premium, color: Colors.orange.shade700),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Président - ${asc['nom']}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+              ],
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: isLoadingUsers
+                  ? const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: Color(0xFF0A5C36))))
+                  : users.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.people_outline, size: 48, color: Colors.grey),
+                              SizedBox(height: 12),
+                              Text('Aucun membre dans cette ASC', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                              SizedBox(height: 4),
+                              Text('Un utilisateur doit d\'abord rejoindre cette ASC avec le code unique.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 12)),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: users.length,
+                          itemBuilder: (context, index) {
+                            final user = users[index];
+                            final roleName = user['role']?['nom'] ?? 'Supporter';
+                            final isPresident = roleName.toUpperCase() == 'PRESIDENT';
+                            final isSelected = selectedUserId == user['id'];
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 6),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFF0A5C36).withValues(alpha: 0.08)
+                                    : isPresident
+                                        ? Colors.orange.withValues(alpha: 0.06)
+                                        : null,
+                                borderRadius: BorderRadius.circular(12),
+                                border: isSelected ? Border.all(color: const Color(0xFF0A5C36), width: 2) : Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: ListTile(
+                                dense: true,
+                                leading: CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: isPresident ? Colors.orange.shade100 : const Color(0xFFE8F5E9),
+                                  child: Icon(
+                                    isPresident ? Icons.workspace_premium : Icons.person,
+                                    color: isPresident ? Colors.orange.shade700 : const Color(0xFF0A5C36),
+                                    size: 18,
+                                  ),
+                                ),
+                                title: Text('${user['prenom'] ?? ''} ${user['nom'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                subtitle: Row(
+                                  children: [
+                                    Text('📱 ${user['telephone'] ?? ''}', style: const TextStyle(fontSize: 11)),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: isPresident ? Colors.orange.withValues(alpha: 0.15) : Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(roleName, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isPresident ? Colors.orange.shade800 : Colors.grey.shade600)),
+                                    ),
+                                  ],
+                                ),
+                                trailing: isSelected ? const Icon(Icons.check_circle, color: Color(0xFF0A5C36)) : null,
+                                onTap: () => setStateDialog(() => selectedUserId = user['id'] as int),
+                              ),
+                            );
+                          },
+                        ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler', style: TextStyle(color: Colors.grey))),
+              if (users.isNotEmpty)
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.shade700,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.workspace_premium, size: 18),
+                  label: const Text('Nommer Président'),
+                  onPressed: selectedUserId == null
+                      ? null
+                      : () async {
+                          Navigator.pop(ctx);
+                          await _assignPresident(selectedUserId!, codeUnique);
+                        },
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _assignPresident(int userId, String codeUnique) async {
+    setState(() => _isLoading = true);
+    try {
+      final result = await _ascService.assignPresident(userId, codeUnique);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Président nommé !'), backgroundColor: Colors.green),
+      );
+      await _loadAscs();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _showAddPlayerDialog(Map<String, dynamic> asc) {

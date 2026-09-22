@@ -441,4 +441,45 @@ class AscService {
       throw Exception('Erreur lors du chargement de la simulation');
     }
   }
+  /// Récupère les utilisateurs d'une ASC (Super Admin)
+  Future<List<Map<String, dynamic>>> getAscUsers(String codeUnique) async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/superadmin/ascs/$codeUnique/users'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(jsonDecode(utf8.decode(response.bodyBytes)));
+    } else {
+      throw Exception('Erreur lors du chargement des utilisateurs');
+    }
+  }
+
+  /// Nommer un Président (Super Admin)
+  Future<Map<String, dynamic>> assignPresident(int userId, String ascCode) async {
+    final token = await _getToken();
+    final response = await http.post(
+      Uri.parse('$_baseUrl/superadmin/ascs/assign-president'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'user_id': userId,
+        'asc_code': ascCode,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } else {
+      final err = jsonDecode(utf8.decode(response.bodyBytes));
+      throw Exception(err['message'] ?? 'Erreur lors de la nomination');
+    }
+  }
 }
