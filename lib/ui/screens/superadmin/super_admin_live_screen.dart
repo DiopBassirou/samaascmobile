@@ -197,29 +197,118 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Ajouter un Événement', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text('Gestion du Match', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildPremiumButton(
-                              'But ${updatedMatch.teamAName}',
-                              const Color(0xFF2E7D32),
-                              Icons.sports_soccer,
-                              () => _showSuperAdminAddGoalDialog(context, auth, matchProv, updatedMatch, true),
+                      if (updatedMatch.statut == 'A_VENIR')
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0A5C36),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
+                            icon: const Icon(Icons.play_arrow),
+                            label: const Text('Démarrer le Match', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            onPressed: () async {
+                              try {
+                                await matchProv.updateMatchStatus(auth, updatedMatch.id, 'EN_COURS');
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                              }
+                            },
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildPremiumButton(
-                              'But ${updatedMatch.teamBName}',
-                              const Color(0xFFC62828),
-                              Icons.sports_soccer,
-                              () => _showSuperAdminAddGoalDialog(context, auth, matchProv, updatedMatch, false),
+                        )
+                      else if (updatedMatch.statut == 'EN_COURS' || updatedMatch.statut == 'MI_TEMPS' || updatedMatch.statut == 'DEUXIEME_MI_TEMPS')
+                        Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildPremiumButton(
+                                    'But ${updatedMatch.teamAName}',
+                                    const Color(0xFF2E7D32),
+                                    Icons.sports_soccer,
+                                    () => _showSuperAdminAddGoalDialog(context, auth, matchProv, updatedMatch, true),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildPremiumButton(
+                                    'But ${updatedMatch.teamBName}',
+                                    const Color(0xFFC62828),
+                                    Icons.sports_soccer,
+                                    () => _showSuperAdminAddGoalDialog(context, auth, matchProv, updatedMatch, false),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(height: 12),
+                            if (updatedMatch.statut == 'EN_COURS')
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                  icon: const Icon(Icons.pause),
+                                  label: const Text('Siffler la Mi-Temps'),
+                                  onPressed: () => matchProv.updateMatchStatus(auth, updatedMatch.id, 'MI_TEMPS'),
+                                ),
+                              ),
+                            if (updatedMatch.statut == 'MI_TEMPS')
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: const Text('Lancer 2ème Mi-Temps'),
+                                  onPressed: () => matchProv.updateMatchStatus(auth, updatedMatch.id, 'DEUXIEME_MI_TEMPS'),
+                                ),
+                              ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF0A5C36),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                icon: const Icon(Icons.stop),
+                                label: const Text('Fin du Match'),
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text('Terminer le match ?'),
+                                      content: const Text('Le score sera définitif et le classement mis à jour.'),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                                          onPressed: () => Navigator.pop(ctx, true),
+                                          child: const Text('Confirmer'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    await matchProv.updateMatchStatus(auth, updatedMatch.id, 'TERMINE');
+                                    if (context.mounted) Navigator.pop(context);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ),

@@ -70,7 +70,16 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
         
         final displayedMatches = _allMatches.where((m) {
           final isSameCategory = m['categorie'] == _categorie;
-          final isSameStatus = _matchStatusFilter == 'TERMINE' ? m['statut'] == 'TERMINE' : m['statut'] != 'TERMINE';
+          bool isSameStatus = false;
+          final st = m['statut'];
+          if (_matchStatusFilter == 'TERMINE') {
+            isSameStatus = (st == 'TERMINE');
+          } else if (_matchStatusFilter == 'EN_COURS') {
+            isSameStatus = (st == 'EN_COURS' || st == 'MI_TEMPS' || st == 'DEUXIEME_MI_TEMPS');
+          } else {
+            // A_VENIR ou autre
+            isSameStatus = (st != 'TERMINE' && st != 'EN_COURS' && st != 'MI_TEMPS' && st != 'DEUXIEME_MI_TEMPS');
+          }
           return isSameCategory && isSameStatus;
         }).toList();
 
@@ -280,11 +289,24 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: _matchStatusFilter == 'A_VENIR' ? Colors.orange : Colors.grey[200],
+                            color: _matchStatusFilter == 'A_VENIR' ? Colors.blue : Colors.grey[200],
                             borderRadius: const BorderRadius.horizontal(left: Radius.circular(10)),
                           ),
                           alignment: Alignment.center,
-                          child: Text('Programmés', style: TextStyle(color: _matchStatusFilter == 'A_VENIR' ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
+                          child: Text('Programmés', style: TextStyle(color: _matchStatusFilter == 'A_VENIR' ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _matchStatusFilter = 'EN_COURS'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _matchStatusFilter == 'EN_COURS' ? Colors.red : Colors.grey[200],
+                          ),
+                          alignment: Alignment.center,
+                          child: Text('En Direct', style: TextStyle(color: _matchStatusFilter == 'EN_COURS' ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
                         ),
                       ),
                     ),
@@ -294,11 +316,11 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: _matchStatusFilter == 'TERMINE' ? Colors.green : Colors.grey[200],
+                            color: _matchStatusFilter == 'TERMINE' ? const Color(0xFF0A5C36) : Colors.grey[200],
                             borderRadius: const BorderRadius.horizontal(right: Radius.circular(10)),
                           ),
                           alignment: Alignment.center,
-                          child: Text('Terminés', style: TextStyle(color: _matchStatusFilter == 'TERMINE' ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
+                          child: Text('Terminés', style: TextStyle(color: _matchStatusFilter == 'TERMINE' ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
                         ),
                       ),
                     ),
@@ -508,6 +530,47 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
               ],
             ),
           ),
+          
+          // ─── Actions Rapides (En Direct) ───
+          if (isLive)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.05),
+                border: Border(top: BorderSide(color: Colors.red.withValues(alpha: 0.1))),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E7D32),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.sports_soccer, size: 16),
+                      label: Text('But $homeTeam', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                      onPressed: () => _showQuickAddGoalDialog(match, true),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFC62828),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.sports_soccer, size: 16),
+                      label: Text('But $awayTeam', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                      onPressed: () => _showQuickAddGoalDialog(match, false),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           // ─── Footer : Lieu + Actions ───
           Container(
@@ -592,6 +655,102 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
       radius: 24,
       backgroundColor: fallbackColor.withValues(alpha: 0.12),
       child: Text(initials, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: fallbackColor)),
+    );
+  }
+
+  void _showQuickAddGoalDialog(Map<String, dynamic> matchData, bool isAsc) {
+    final match = MatchGame.fromJson(matchData);
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final matchProv = Provider.of<MatchProvider>(context, listen: false);
+    
+    final minuteController = TextEditingController(text: '');
+    final manualNameController = TextEditingController(text: '');
+    
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(Icons.sports_soccer, color: isAsc ? const Color(0xFF2E7D32) : const Color(0xFFC62828)),
+              const SizedBox(width: 8),
+              Text(isAsc ? 'But ${match.teamAName}' : 'But ${match.teamBName}', style: TextStyle(color: isAsc ? const Color(0xFF2E7D32) : const Color(0xFFC62828), fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Nom ou Numéro du Buteur :', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: manualNameController,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  hintText: 'ex: Moussa (9)',
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text('Minute du but :', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: minuteController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  hintText: 'ex: 24',
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isAsc ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              icon: const Icon(Icons.check, size: 18),
+              label: const Text('Valider'),
+              onPressed: () async {
+                final minute = int.tryParse(minuteController.text) ?? 1;
+                final playerName = manualNameController.text.trim().isNotEmpty ? manualNameController.text.trim() : null;
+                
+                try {
+                  await matchProv.superAdminAddEvent(
+                    auth,
+                    match.id,
+                    isAsc ? 'BUT_ASC' : 'BUT_ADV',
+                    playerName: playerName,
+                    minute: minute,
+                    description: isAsc ? 'But de ${playerName ?? "l\'équipe"} ($minute\')' : 'But adverse ($minute\')',
+                  );
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('⚽ But enregistré !'),
+                        backgroundColor: isAsc ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
+                      ),
+                    );
+                    _loadMatches(); // Refresh the list
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
