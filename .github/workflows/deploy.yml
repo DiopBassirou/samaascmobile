@@ -24,13 +24,27 @@ jobs:
       - name: Build Web (PWA)
         run: flutter build web --release --pwa-strategy=offline-first
 
-      - name: Deploy to VPS via SCP
-        uses: appleboy/scp-action@v0.1.4
+      - name: Compress Build
+        run: tar -czvf web.tar.gz -C build/web .
+
+      - name: Copy Tarball to VPS
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
-          source: "build/web/*"
-          target: "/opt/sama_asc/sama_asc_mobile/build/web"
-          strip_components: 2
+          source: "web.tar.gz"
+          target: "/tmp"
+
+      - name: Extract on VPS
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            mkdir -p /opt/sama_asc/sama_asc_mobile/build/web
+            tar -xzvf /tmp/web.tar.gz -C /opt/sama_asc/sama_asc_mobile/build/web
+            rm /tmp/web.tar.gz
