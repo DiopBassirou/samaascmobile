@@ -479,7 +479,7 @@ class _LiveTabState extends State<LiveTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildTeamLogo(auth.user?['asc']?['nom'] ?? 'Notre ASC', const Color(0xFF66BB6A), logoUrl: auth.user?['asc']?['logo_url']),
+              _buildTeamLogo(match.teamAName, const Color(0xFF66BB6A), logoUrl: match.teamALogo),
               if (match.statut == 'A_VENIR' || match.statut == 'REPORTE')
                 Column(
                   children: [
@@ -504,7 +504,7 @@ class _LiveTabState extends State<LiveTab> {
                     style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold, letterSpacing: 2),
                   ),
                 ),
-              _buildTeamLogo(match.teamBName, const Color(0xFF42A5F5)),
+              _buildTeamLogo(match.teamBName, const Color(0xFF42A5F5), logoUrl: match.teamBLogo),
             ],
           ),
           if (isCom && (match.statut == 'A_VENIR' || match.statut == 'REPORTE')) ...[
