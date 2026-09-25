@@ -152,7 +152,7 @@ class _LiveTabState extends State<LiveTab> {
                                   Icons.play_circle_fill,
                                   () async {
                                     try {
-                                      await matchProv.updateMatchStatus(auth, match.id, 'EN_COURS');
+                                      await matchProv.updateMatchStatus(auth, match.id, 'DEUXIEME_MI_TEMPS');
                                       if (mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(content: Text('▶ 2ème mi-temps lancée !'), backgroundColor: Colors.green),
@@ -427,6 +427,10 @@ class _LiveTabState extends State<LiveTab> {
       case 'MI_TEMPS':
         badgeColor = Colors.amber[800]!;
         badgeText = '⏸️ MI-TEMPS';
+        break;
+      case 'DEUXIEME_MI_TEMPS':
+        badgeColor = Colors.red;
+        badgeText = '🔴 2ème MI-TEMPS';
         break;
       case 'TERMINE':
         badgeColor = Colors.grey[700]!;

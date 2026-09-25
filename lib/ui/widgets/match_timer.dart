@@ -46,25 +46,25 @@ class _MatchTimerState extends State<MatchTimer> {
   void _calculateTime() {
     final now = DateTime.now();
     int seconds = 0;
+    int halfLength = widget.match.categorie == 'CADET' ? 30 : 40;
 
     if (widget.match.statut == 'EN_COURS' && widget.match.startedAt != null) {
       seconds = now.difference(widget.match.startedAt!).inSeconds;
     } else if (widget.match.statut == 'MI_TEMPS') {
-      seconds = 40 * 60; // 40 minutes at half time
+      seconds = halfLength * 60;
     } else if (widget.match.statut == 'DEUXIEME_MI_TEMPS' && widget.match.secondHalfStartedAt != null) {
-      seconds = (40 * 60) + now.difference(widget.match.secondHalfStartedAt!).inSeconds;
+      seconds = (halfLength * 60) + now.difference(widget.match.secondHalfStartedAt!).inSeconds;
     } else if (widget.match.statut == 'TERMINE') {
-      // Just show 80:00 or stop
-      seconds = 80 * 60;
+      seconds = (halfLength * 2) * 60;
     }
 
     if (mounted) {
       setState(() {
         _elapsedSeconds = seconds;
         
-        if (widget.match.statut == 'EN_COURS' && seconds > (40 * 60)) {
+        if (widget.match.statut == 'EN_COURS' && seconds > (halfLength * 60)) {
           _isAdditionalTime = true;
-        } else if (widget.match.statut == 'DEUXIEME_MI_TEMPS' && seconds > (80 * 60)) {
+        } else if (widget.match.statut == 'DEUXIEME_MI_TEMPS' && seconds > ((halfLength * 2) * 60)) {
            _isAdditionalTime = true;
         } else {
           _isAdditionalTime = false;
@@ -83,11 +83,12 @@ class _MatchTimerState extends State<MatchTimer> {
   Widget build(BuildContext context) {
     int displayMinutes = _elapsedSeconds ~/ 60;
     int displaySeconds = _elapsedSeconds % 60;
+    int halfLength = widget.match.categorie == 'CADET' ? 30 : 40;
     
     String timeString;
     
     if (_isAdditionalTime) {
-        int baseTime = widget.match.statut == 'EN_COURS' ? 40 : 80;
+        int baseTime = widget.match.statut == 'EN_COURS' ? halfLength : (halfLength * 2);
         int additionalMinutes = displayMinutes - baseTime;
         timeString = "$baseTime + $additionalMinutes";
     } else {
