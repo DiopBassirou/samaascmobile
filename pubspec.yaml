@@ -18,10 +18,10 @@ dependencies:
   url_launcher: ^6.3.2
   intl: ^0.20.3
   image_picker: ^1.2.3
-  firebase_core: ^4.14.0
-  firebase_messaging: ^16.6.0
+  firebase_core: ^4.15.0
+  firebase_messaging: ^16.7.0
   cached_network_image: ^3.4.1
-  firebase_core_web: any
+  firebase_core_web: ^3.12.0
 
 dev_dependencies:
   flutter_test:
