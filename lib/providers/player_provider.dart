@@ -23,9 +23,12 @@ class PlayerProvider with ChangeNotifier {
 
     try {
       final apiUrl = dotenv.env['API_URL'] ?? 'http://127.0.0.1:8000/api';
-      final uri = Uri.parse('$apiUrl/players').replace(
-        queryParameters: (ascCode != null && ascCode.isNotEmpty) ? {'asc_code': ascCode} : null,
-      );
+      final queryParams = <String, String>{};
+      if (ascCode != null && ascCode.isNotEmpty) {
+        queryParams['asc_code'] = ascCode;
+      }
+      queryParams['cb'] = DateTime.now().millisecondsSinceEpoch.toString();
+      final uri = Uri.parse('$apiUrl/players').replace(queryParameters: queryParams);
 
       final response = await http.get(
         uri,
