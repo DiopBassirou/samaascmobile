@@ -359,7 +359,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                   spacing: 8,
                   runSpacing: 6,
                   children: [
-                    if (match.pouleName != null)
+                    if (match.pouleName != null && (match.phase == null || match.phase == 'Phase de Groupes'))
                       _buildInfoChip(Icons.emoji_events_outlined, match.pouleName!),
                     if (match.phase != null && match.phase != match.pouleName)
                       _buildInfoChip(Icons.workspaces_outline, match.phase!),

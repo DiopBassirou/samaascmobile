@@ -128,23 +128,11 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                 ),
                 const SizedBox(height: 16),
 
-                // ─── POULE ───
+                // ─── ÉQUIPES ───
                 if (filteredPoules.isEmpty)
                   _emptyBox('Aucune poule $_categorie disponible')
                 else ...[
-                  _sectionTitle('Poule'),
-                  const SizedBox(height: 8),
-                  _buildDropdown<int>(
-                    value: _selectedPouleIndex != null && _selectedPouleIndex! < filteredPoules.length ? _selectedPouleIndex : null,
-                    hint: 'Sélectionner une poule',
-                    icon: Icons.emoji_events_outlined,
-                    items: List.generate(filteredPoules.length, (i) {
-                      return DropdownMenuItem(value: i, child: Text(filteredPoules[i]['nom'] ?? 'Poule ${i + 1}', style: const TextStyle(fontWeight: FontWeight.w600)));
-                    }),
-                    onChanged: (val) => setState(() { _selectedPouleIndex = val; _teamAId = null; _teamBId = null; }),
-                  ),
-
-                  if (_selectedPouleIndex != null && _selectedPouleIndex! < filteredPoules.length) ..._buildTeamSelectors(filteredPoules.cast<Map<String, dynamic>>()),
+                  ..._buildTeamSelectors(filteredPoules.cast<Map<String, dynamic>>()),
 
                   // ─── DATE & HEURE ───
                   _sectionTitle('Date & Heure'),
@@ -1007,7 +995,15 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
   }
 
   List<Widget> _buildTeamSelectors(List<Map<String, dynamic>> filteredPoules) {
-    final teams = (filteredPoules[_selectedPouleIndex!]['teams'] as List<dynamic>? ?? []);
+    List<Map<String, dynamic>> allTeams = [];
+    for (var p in filteredPoules) {
+      if (p['teams'] != null) {
+        for (var t in p['teams']) {
+          allTeams.add({...t as Map<String, dynamic>, 'poule_nom': p['nom']});
+        }
+      }
+    }
+
     return [
       const SizedBox(height: 16),
       _sectionTitle('Équipe A'),
@@ -1016,8 +1012,8 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
         value: _teamAId,
         hint: 'Sélectionner l\'équipe A',
         icon: Icons.shield,
-        items: teams.map<DropdownMenuItem<int>>((t) {
-          return DropdownMenuItem(value: t['id'] as int, child: Text(t['nom_equipe'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600)));
+        items: allTeams.map<DropdownMenuItem<int>>((t) {
+          return DropdownMenuItem(value: t['id'] as int, child: Text('${t['nom_equipe']} (${t['poule_nom']})', style: const TextStyle(fontWeight: FontWeight.w600)));
         }).toList(),
         onChanged: (val) => setState(() => _teamAId = val),
       ),
@@ -1030,8 +1026,8 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
         value: _teamBId,
         hint: 'Sélectionner l\'équipe B',
         icon: Icons.shield_outlined,
-        items: teams.where((t) => (t['id'] as int) != _teamAId).map<DropdownMenuItem<int>>((t) {
-          return DropdownMenuItem(value: t['id'] as int, child: Text(t['nom_equipe'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600)));
+        items: allTeams.where((t) => (t['id'] as int) != _teamAId).map<DropdownMenuItem<int>>((t) {
+          return DropdownMenuItem(value: t['id'] as int, child: Text('${t['nom_equipe']} (${t['poule_nom']})', style: const TextStyle(fontWeight: FontWeight.w600)));
         }).toList(),
         onChanged: (val) => setState(() => _teamBId = val),
       ),

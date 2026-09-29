@@ -1035,72 +1035,56 @@ class _MatchSheetState extends State<_MatchSheet> {
               ),
             ),
           ] else ...[
-            // Sélection poule
-            const Text('Poule', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: DropdownButtonFormField<int>(
-                initialValue: _selectedPouleIndex != null && _selectedPouleIndex! < poules.length ? _selectedPouleIndex : null,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.emoji_events_outlined, color: Color(0xFF0A5C36)),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  hintText: 'Sélectionner une poule',
-                  hintStyle: TextStyle(color: Colors.grey[400]),
-                ),
-                items: List.generate(poules.length, (i) {
-                  return DropdownMenuItem<int>(
-                    value: i,
-                    child: Text(poules[i]['nom'] ?? 'Poule ${i + 1}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                  );
-                }),
-                onChanged: (val) {
-                  setState(() {
-                    _selectedPouleIndex = val;
-                    _selectedTeamId = null;
-                  });
-                },
-              ),
+            // Sélection adversaire (Toutes les équipes de la catégorie)
+            Builder(
+              builder: (ctx) {
+                List<Map<String, dynamic>> allTeams = [];
+                for (var p in poules) {
+                  if (p['teams'] != null) {
+                    for (var t in p['teams']) {
+                      if (t['asc_code'] != widget.auth.user?['asc_code']) {
+                        allTeams.add({...t as Map<String, dynamic>, 'poule_nom': p['nom']});
+                      }
+                    }
+                  }
+                }
+                
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Adversaire', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: DropdownButtonFormField<int>(
+                        initialValue: _selectedTeamId,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.shield_outlined, color: Color(0xFF0A5C36)),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          hintText: 'Sélectionner l\'équipe adverse',
+                          hintStyle: TextStyle(color: Colors.grey[400]),
+                        ),
+                        items: allTeams.map((t) {
+                          return DropdownMenuItem<int>(
+                            value: t['id'],
+                            child: Text('${t['nom_equipe']} (${t['poule_nom']})', style: const TextStyle(fontWeight: FontWeight.w600)),
+                          );
+                        }).toList(),
+                        onChanged: (val) => setState(() => _selectedTeamId = val),
+                      ),
+                    ),
+                  ],
+                );
+              }
             ),
             const SizedBox(height: 20),
 
-            // Sélection adversaire
-            if (_selectedPouleIndex != null && _selectedPouleIndex! < poules.length) ...[
-              const Text('Adversaire', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
-              const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child: DropdownButtonFormField<int>(
-                  initialValue: _selectedTeamId,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.shield_outlined, color: Color(0xFF0A5C36)),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    hintText: 'Sélectionner l\'équipe adverse',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                  ),
-                  items: (poules[_selectedPouleIndex!]['teams'] as List<dynamic>? ?? []).map((t) {
-                    return DropdownMenuItem<int>(
-                      value: t['id'],
-                      child: Text(t['nom_equipe'] ?? 'Équipe', style: const TextStyle(fontWeight: FontWeight.w600)),
-                    );
-                  }).toList(),
-                  onChanged: (val) => setState(() => _selectedTeamId = val),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
 
             // Phase de la compétition
             const Text('Phase', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
@@ -1230,7 +1214,7 @@ class _MatchSheetState extends State<_MatchSheet> {
                   elevation: 4,
                   shadowColor: const Color(0xFF0A5C36).withValues(alpha: 0.4),
                 ),
-                onPressed: _selectedPouleIndex == null || _selectedTeamId == null
+                onPressed: _selectedTeamId == null
                     ? null
                     : () async {
                         final dt = DateTime(
