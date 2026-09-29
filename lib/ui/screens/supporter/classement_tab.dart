@@ -181,42 +181,7 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
 
     return Column(
       children: [
-        // Bouton Prédictions / Simulateur
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => QuarterFinalsScreen(category: _selectedCategorie == 'CADET' ? 'CADET' : 'SENIOR')),
-              );
-            },
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Colors.amber, Colors.orange]),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(color: Colors.orange.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.emoji_events, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    _selectedCategorie == 'CADET' ? 'Prédictions 1/4 finale (CADETS)' : 'Prédictions 1/4 finale (SENIORS)',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 12),
-                ],
-              ),
-            ),
-          ),
-        ),
+
         // Liste des matchs
         Expanded(
           child: ListView.builder(
@@ -512,54 +477,7 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
-        if (_selectedCategorie == 'SENIOR' || _selectedCategorie.isEmpty)
-          GestureDetector(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const QuarterFinalsScreen(category: 'SENIOR')));
-            },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFF57F17), Color(0xFFF9A825)]),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.orange.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.auto_awesome, color: Colors.white),
-                  SizedBox(width: 12),
-                  Text('Prédictions 1/4 Finale (Seniors)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                  Spacer(),
-                  Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
-                ],
-              ),
-            ),
-          ),
-        if (_selectedCategorie == 'CADET' || _selectedCategorie.isEmpty)
-          GestureDetector(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const QuarterFinalsScreen(category: 'CADET')));
-            },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF0F8A4B), Color(0xFF0A5C36)]),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.green.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.auto_awesome, color: Colors.white),
-                  SizedBox(width: 12),
-                  Text('Prédictions 1/4 Finale (Cadets)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                  Spacer(),
-                  Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
-                ],
-              ),
-            ),
-          ),
+
         ...filteredZones.map((zoneEntry) {
           final zoneName = zoneEntry.key;
           final categories = zoneEntry.value as Map<String, dynamic>;

@@ -296,7 +296,7 @@ class _MainShellState extends State<MainShell> {
           'roleIcon': Icons.favorite,
           'roleLabel': 'Supporter',
           'stats': [
-            StatCardData(label: 'MES DONS', value: '0F'),
+            StatCardData(label: 'EFFECTIF', value: effectifCount),
             StatCardData(
               label: 'PROCHAIN MATCH', 
               value: matchProvider.nextMatch != null 
