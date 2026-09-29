@@ -377,6 +377,11 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                     ),
                   ],
                 ),
+                if (isNext) ...[
+                  if (match.dateMatch != null) 
+                    MatchCountdown(dateMatch: DateTime.parse(match.dateMatch)),
+                  MatchPoll(teamAName: match.teamAName, teamBName: match.teamBName),
+                ],
               ],
             ),
           ),
@@ -510,5 +515,213 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
     final dt = DateTime.tryParse(dateStr);
     if (dt == null) return '';
     return '${dt.hour.toString().padLeft(2, '0')}h${dt.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+// ==========================================
+// WIDGETS POUR LE COMPTE A REBOURS ET LE SONDAGE (DEMI-FINALES)
+// ==========================================
+
+class MatchCountdown extends StatefulWidget {
+  final DateTime dateMatch;
+  const MatchCountdown({super.key, required this.dateMatch});
+
+  @override
+  State<MatchCountdown> createState() => _MatchCountdownState();
+}
+
+class _MatchCountdownState extends State<MatchCountdown> {
+  late Timer _timer;
+  Duration _duration = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateDuration();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _calculateDuration();
+    });
+  }
+
+  void _calculateDuration() {
+    final now = DateTime.now();
+    if (widget.dateMatch.isAfter(now)) {
+      setState(() {
+        _duration = widget.dateMatch.difference(now);
+      });
+    } else {
+      setState(() {
+        _duration = Duration.zero;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_duration.inSeconds <= 0) return const SizedBox();
+
+    final days = _duration.inDays;
+    final hours = _duration.inHours.remainder(24);
+    final minutes = _duration.inMinutes.remainder(60);
+    final seconds = _duration.inSeconds.remainder(60);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.timer_outlined, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text('LE CHOC COMMENCE DANS :', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildTimeBlock(days.toString(), 'JRS'),
+              const Text(':', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              _buildTimeBlock(hours.toString().padLeft(2, '0'), 'HRS'),
+              const Text(':', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              _buildTimeBlock(minutes.toString().padLeft(2, '0'), 'MIN'),
+              const Text(':', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              _buildTimeBlock(seconds.toString().padLeft(2, '0'), 'SEC'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeBlock(String value, String label) {
+    return Column(
+      children: [
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+}
+
+class MatchPoll extends StatefulWidget {
+  final String teamAName;
+  final String teamBName;
+  const MatchPoll({super.key, required this.teamAName, required this.teamBName});
+
+  @override
+  State<MatchPoll> createState() => _MatchPollState();
+}
+
+class _MatchPollState extends State<MatchPoll> {
+  bool hasVoted = false;
+  int votesA = 485; // Initial mock votes for hype
+  int votesB = 512;
+
+  void _vote(bool isTeamA) {
+    if (hasVoted) return;
+    setState(() {
+      hasVoted = true;
+      if (isTeamA) votesA++; else votesB++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = votesA + votesB;
+    final percentA = total > 0 ? (votesA / total) : 0.5;
+    final percentB = total > 0 ? (votesB / total) : 0.5;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          const Text('?? SONDAGE DU MATCH ??', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 4),
+          const Text('Qui va gagner cette rencontre ?', style: TextStyle(color: Colors.white70, fontSize: 12)),
+          const SizedBox(height: 16),
+          
+          if (!hasVoted)
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _vote(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF0A5C36),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(widget.teamAName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _vote(false),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF0A5C36),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(widget.teamBName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                  ),
+                ),
+              ],
+            )
+          else
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('% ', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text(' %', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: percentA,
+                    backgroundColor: Colors.blueAccent,
+                    color: Colors.orangeAccent,
+                    minHeight: 12,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.greenAccent, size: 16),
+                    SizedBox(width: 6),
+                    Text('Vote pris en compte !', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
   }
 }
