@@ -380,7 +380,12 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                 if (isNext) ...[
                   if (match.dateMatch != null) 
                     MatchCountdown(dateMatch: DateTime.parse(match.dateMatch)),
-                  MatchPoll(teamAName: match.teamAName, teamBName: match.teamBName),
+                  MatchPoll(
+                    teamAName: match.teamAName, 
+                    teamBName: match.teamBName,
+                    teamALogo: match.teamALogo,
+                    teamBLogo: match.teamBLogo,
+                  ),
                 ],
               ],
             ),
@@ -620,7 +625,10 @@ class _MatchCountdownState extends State<MatchCountdown> {
 class MatchPoll extends StatefulWidget {
   final String teamAName;
   final String teamBName;
-  const MatchPoll({super.key, required this.teamAName, required this.teamBName});
+  final String? teamALogo;
+  final String? teamBLogo;
+
+  const MatchPoll({super.key, required this.teamAName, required this.teamBName, this.teamALogo, this.teamBLogo});
 
   @override
   State<MatchPoll> createState() => _MatchPollState();
@@ -635,7 +643,11 @@ class _MatchPollState extends State<MatchPoll> {
     if (hasVoted) return;
     setState(() {
       hasVoted = true;
-      if (isTeamA) votesA++; else votesB++;
+      if (isTeamA) {
+        votesA++;
+      } else {
+        votesB++;
+      }
     });
   }
 
@@ -654,7 +666,7 @@ class _MatchPollState extends State<MatchPoll> {
       ),
       child: Column(
         children: [
-          const Text('?? SONDAGE DU MATCH ??', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+          const Text('🔥 SONDAGE DU MATCH 🔥', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
           const SizedBox(height: 4),
           const Text('Qui va gagner cette rencontre ?', style: TextStyle(color: Colors.white70, fontSize: 12)),
           const SizedBox(height: 16),
@@ -668,10 +680,19 @@ class _MatchPollState extends State<MatchPoll> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFF0A5C36),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: Text(widget.teamAName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (widget.teamALogo != null) ...[
+                          TeamLogo(teamName: widget.teamAName, logoUrl: widget.teamALogo, size: 24, fallbackColor: Colors.greenAccent),
+                          const SizedBox(width: 6),
+                        ],
+                        Flexible(child: Text(widget.teamAName, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -681,10 +702,19 @@ class _MatchPollState extends State<MatchPoll> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFF0A5C36),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: Text(widget.teamBName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (widget.teamBLogo != null) ...[
+                          TeamLogo(teamName: widget.teamBName, logoUrl: widget.teamBLogo, size: 24, fallbackColor: Colors.green),
+                          const SizedBox(width: 6),
+                        ],
+                        Flexible(child: Text(widget.teamBName, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -695,8 +725,8 @@ class _MatchPollState extends State<MatchPoll> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('% ', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                    Text(' %', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text('${(percentA * 100).round()}% ${widget.teamAName}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text('${widget.teamBName} ${(percentB * 100).round()}%', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 const SizedBox(height: 8),

@@ -601,6 +601,8 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
                                       ))),
                                     ),
                                   ),
+                                  TeamLogo(teamName: t['name'] ?? '', logoUrl: t['logo_url'], size: 20, fallbackColor: const Color(0xFF0A5C36)),
+                                  const SizedBox(width: 6),
                                   Expanded(child: Text('${t['name'] ?? ''}', style: TextStyle(
                                     fontWeight: t['highlight'] == true ? FontWeight.bold : FontWeight.w500,
                                     fontSize: 12,
