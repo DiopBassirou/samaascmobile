@@ -112,7 +112,18 @@ class _MatchPollState extends State<MatchPoll> {
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F8A4B), Color(0xFF0A5C36)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0A5C36).withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
