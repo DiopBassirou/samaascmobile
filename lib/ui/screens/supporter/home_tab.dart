@@ -628,8 +628,8 @@ class MatchPoll extends StatefulWidget {
 
 class _MatchPollState extends State<MatchPoll> {
   bool hasVoted = false;
-  int votesA = 485; // Initial mock votes for hype
-  int votesB = 512;
+  int votesA = 0; // True initial votes
+  int votesB = 0;
 
   void _vote(bool isTeamA) {
     if (hasVoted) return;
