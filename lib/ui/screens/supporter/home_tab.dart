@@ -9,6 +9,7 @@ import '../../../ui/widgets/match_timer.dart';
 import '../../widgets/team_logo.dart';
 
 import '../../../services/device_service.dart';
+import '../../widgets/match_poll.dart';
 
 class SupporterHomeTab extends StatefulWidget {
   const SupporterHomeTab({super.key});
@@ -381,6 +382,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                   if (match.dateMatch != null) 
                     MatchCountdown(dateMatch: DateTime.parse(match.dateMatch)),
                   MatchPoll(
+                    matchId: match.id,
                     teamAName: match.teamAName, 
                     teamBName: match.teamBName,
                     teamALogo: match.teamALogo,
@@ -622,136 +624,4 @@ class _MatchCountdownState extends State<MatchCountdown> {
   }
 }
 
-class MatchPoll extends StatefulWidget {
-  final String teamAName;
-  final String teamBName;
-  final String? teamALogo;
-  final String? teamBLogo;
 
-  const MatchPoll({super.key, required this.teamAName, required this.teamBName, this.teamALogo, this.teamBLogo});
-
-  @override
-  State<MatchPoll> createState() => _MatchPollState();
-}
-
-class _MatchPollState extends State<MatchPoll> {
-  bool hasVoted = false;
-  int votesA = 0; // True initial votes
-  int votesB = 0;
-
-  void _vote(bool isTeamA) {
-    if (hasVoted) return;
-    setState(() {
-      hasVoted = true;
-      if (isTeamA) {
-        votesA++;
-      } else {
-        votesB++;
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final total = votesA + votesB;
-    final percentA = total > 0 ? (votesA / total) : 0.5;
-    final percentB = total > 0 ? (votesB / total) : 0.5;
-
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          const Text('🔥 SONDAGE DU MATCH 🔥', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-          const SizedBox(height: 4),
-          const Text('Qui va gagner cette rencontre ?', style: TextStyle(color: Colors.white70, fontSize: 12)),
-          const SizedBox(height: 16),
-          
-          if (!hasVoted)
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _vote(true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF0A5C36),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (widget.teamALogo != null) ...[
-                          TeamLogo(teamName: widget.teamAName, logoUrl: widget.teamALogo, size: 24, fallbackColor: Colors.greenAccent),
-                          const SizedBox(width: 6),
-                        ],
-                        Flexible(child: Text(widget.teamAName, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _vote(false),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF0A5C36),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (widget.teamBLogo != null) ...[
-                          TeamLogo(teamName: widget.teamBName, logoUrl: widget.teamBLogo, size: 24, fallbackColor: Colors.green),
-                          const SizedBox(width: 6),
-                        ],
-                        Flexible(child: Text(widget.teamBName, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            )
-          else
-            Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('${(percentA * 100).round()}% ${widget.teamAName}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                    Text('${widget.teamBName} ${(percentB * 100).round()}%', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: percentA,
-                    backgroundColor: Colors.blueAccent,
-                    color: Colors.orangeAccent,
-                    minHeight: 12,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.greenAccent, size: 16),
-                    SizedBox(width: 6),
-                    Text('Vote pris en compte !', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-}
