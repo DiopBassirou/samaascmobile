@@ -467,7 +467,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    if (e.description != null && e.description!.isNotEmpty)
+                    if (e.description != null && e.description!.isNotEmpty && e.type != 'BUT_ASC' && e.type != 'BUT_ADV')
                       Text(e.description!, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
                   ],
                 ),

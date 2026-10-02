@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/classement_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../widgets/team_logo.dart';
-import '../../widgets/match_poll.dart';
+
 import 'quarter_finals_screen.dart';
 
 class ClassementTab extends StatefulWidget {
@@ -441,18 +441,6 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
       return Column(
         children: [
           mainRow,
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: MatchPoll(
-              matchId: m['id'],
-              teamAName: m['home'] ?? 'Équipe A',
-              teamBName: m['away'] ?? 'Équipe B',
-              teamALogo: m['home_logo'],
-              teamBLogo: m['away_logo'],
-              initialVotesA: m['votes_home'] ?? 0,
-              initialVotesB: m['votes_away'] ?? 0,
-            ),
-          ),
           const SizedBox(height: 10),
         ],
       );
