@@ -435,7 +435,13 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                                       icon: const Icon(Icons.sports_score, size: 20),
                                       label: const Text('🎯 Tir au But', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                       onPressed: () async {
-                                        await matchProv.superAdminUpdateMatchStatus(auth, updatedMatch.id, 'TIR_AU_BUT');
+                                        try {
+                                          await matchProv.superAdminUpdateMatchStatus(auth, updatedMatch.id, 'TIR_AU_BUT');
+                                        } catch (e) {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+                                          }
+                                        }
                                       },
                                     )
                                   : ElevatedButton.icon(
