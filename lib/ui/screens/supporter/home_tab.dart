@@ -170,7 +170,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _buildEventsTimeline(matchesToDisplay.first.events),
+                      _buildEventsTimeline(matchesToDisplay.first, matchesToDisplay.first.events),
                     ],
                   ),
                 ),
@@ -397,7 +397,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
     );
   }
 
-  Widget _buildEventsTimeline(List<dynamic> events) {
+  Widget _buildEventsTimeline(MatchGame match, List<dynamic> events) {
     if (events.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 20),
@@ -423,10 +423,10 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
         Color iconColor = Colors.green;
 
         if (e.type == 'BUT_ASC') {
-          title = '⚽ But Notre ASC${e.playerName != null ? " : ${e.playerName}" : ""}';
+          title = '⚽ But ${match.teamAName}${e.playerName != null ? " : ${e.playerName}" : ""}';
           iconColor = const Color(0xFF2E7D32);
         } else if (e.type == 'BUT_ADV') {
-          title = '⚽ But Adversaire';
+          title = '⚽ But ${match.teamBName}${e.playerName != null ? " : ${e.playerName}" : ""}';
           iconColor = const Color(0xFFC62828);
         } else if (e.type == 'MI_TEMPS') {
           title = '⏸️ Mi-Temps';

@@ -98,7 +98,7 @@ class _LiveTabState extends State<LiveTab> {
                           children: [
                             Expanded(
                               child: _buildPremiumButton(
-                                '⚽ Notre ASC',
+                                '⚽ ${match.teamAName}',
                                 const Color(0xFF2E7D32),
                                 Icons.sports_soccer,
                                 () => _showAddGoalDialog(context, auth, matchProv, playerProv, match, true),
@@ -107,10 +107,48 @@ class _LiveTabState extends State<LiveTab> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: _buildPremiumButton(
-                                '⚽ Adversaire',
+                                '⚽ ${match.teamBName}',
                                 const Color(0xFFC62828),
                                 Icons.sports_soccer,
                                 () => _showAddGoalDialog(context, auth, matchProv, playerProv, match, false),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildPremiumButton(
+                                '🎯 TAB ${match.teamAName}',
+                                const Color(0xFF2E7D32).withValues(alpha: 0.8),
+                                Icons.sports_score,
+                                () async {
+                                  try {
+                                    await matchProv.addMatchEvent(auth, match.id, 'TIR_AU_BUT_ASC', description: 'Tir au but réussi');
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildPremiumButton(
+                                '🎯 TAB ${match.teamBName}',
+                                const Color(0xFFC62828).withValues(alpha: 0.8),
+                                Icons.sports_score,
+                                () async {
+                                  try {
+                                    await matchProv.addMatchEvent(auth, match.id, 'TIR_AU_BUT_ADV', description: 'Tir au but réussi');
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                    }
+                                  }
+                                },
                               ),
                             ),
                           ],
@@ -240,7 +278,7 @@ class _LiveTabState extends State<LiveTab> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _buildEventsTimeline(match.events),
+                      _buildEventsTimeline(match, match.events),
                     ],
                   ),
                 ),
@@ -503,9 +541,18 @@ class _LiveTabState extends State<LiveTab> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                   ),
-                  child: Text(
-                    '${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0}',
-                    style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold, letterSpacing: 2),
+                  child: Column(
+                    children: [
+                      Text(
+                        '${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0}',
+                        style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold, letterSpacing: 2),
+                      ),
+                      if (match.penaltiesAsc != null && match.penaltiesAdv != null)
+                        Text(
+                          '(${match.penaltiesAsc} TAB ${match.penaltiesAdv})',
+                          style: const TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                    ],
                   ),
                 ),
               _buildTeamLogo(match.teamBName, const Color(0xFF42A5F5), logoUrl: match.teamBLogo),
@@ -600,7 +647,7 @@ class _LiveTabState extends State<LiveTab> {
     );
   }
 
-  Widget _buildEventsTimeline(List<MatchEvent> events) {
+  Widget _buildEventsTimeline(MatchGame match, List<MatchEvent> events) {
     if (events.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 20),
@@ -626,10 +673,10 @@ class _LiveTabState extends State<LiveTab> {
         Color iconColor = Colors.green;
 
         if (e.type == 'BUT_ASC') {
-          title = '⚽ But Notre ASC${e.playerName != null ? " : ${e.playerName}" : ""}';
+          title = '⚽ But ${match.teamAName}${e.playerName != null ? " : ${e.playerName}" : ""}';
           iconColor = const Color(0xFF2E7D32);
         } else if (e.type == 'BUT_ADV') {
-          title = '⚽ But Adversaire';
+          title = '⚽ But ${match.teamBName}';
           iconColor = const Color(0xFFC62828);
         } else if (e.type == 'MI_TEMPS') {
           title = '⏸️ Mi-Temps';
@@ -703,7 +750,7 @@ class _LiveTabState extends State<LiveTab> {
                 children: [
                   Icon(Icons.sports_soccer, color: isAsc ? const Color(0xFF2E7D32) : const Color(0xFFC62828)),
                   const SizedBox(width: 8),
-                  Text(isAsc ? 'But Notre ASC' : 'But Adversaire', style: TextStyle(color: isAsc ? const Color(0xFF2E7D32) : const Color(0xFFC62828), fontWeight: FontWeight.bold)),
+                  Text(isAsc ? 'But ${match.teamAName}' : 'But ${match.teamBName}', style: TextStyle(color: isAsc ? const Color(0xFF2E7D32) : const Color(0xFFC62828), fontWeight: FontWeight.bold)),
                 ],
               ),
               content: Column(
@@ -812,14 +859,14 @@ class _LiveTabState extends State<LiveTab> {
                           playerId: finalPlayerId,
                           playerName: playerName,
                           minute: minute,
-                          description: isAsc ? 'But de ${playerName ?? "Notre ASC"} ($minute\')' : 'But adverse ($minute\')',
+                          description: isAsc ? 'But de ${playerName ?? match.teamAName} ($minute\')' : 'But de ${match.teamBName} ($minute\')',
                         );
                       }
                       if (ctx.mounted) Navigator.pop(ctx);
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(isAsc ? '⚽ But Notre ASC ! Score : ${(match.scoreAsc ?? 0) + 1}-${match.scoreAdv ?? 0}' : '⚽ But Adversaire ! Score : ${match.scoreAsc ?? 0}-${(match.scoreAdv ?? 0) + 1}'),
+                            content: Text(isAsc ? '⚽ But ${match.teamAName} ! Score : ${(match.scoreAsc ?? 0) + 1}-${match.scoreAdv ?? 0}' : '⚽ But ${match.teamBName} ! Score : ${match.scoreAsc ?? 0}-${(match.scoreAdv ?? 0) + 1}'),
                             backgroundColor: isAsc ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
                           ),
                         );

@@ -36,6 +36,8 @@ class MatchGame {
   final String dateMatch;
   final int? scoreAsc;
   final int? scoreAdv;
+  final int? penaltiesAsc;
+  final int? penaltiesAdv;
   final String statut; // A_VENIR, EN_COURS, MI_TEMPS, TERMINE
   final String? hommeDuMatch;
   final String teamAName;
@@ -60,6 +62,8 @@ class MatchGame {
     required this.dateMatch,
     this.scoreAsc,
     this.scoreAdv,
+    this.penaltiesAsc,
+    this.penaltiesAdv,
     required this.statut,
     this.hommeDuMatch,
     this.teamAName = 'Equipe A',
@@ -87,6 +91,8 @@ class MatchGame {
       dateMatch: json['date_match']?.toString() ?? '',
       scoreAsc: json['score_asc_display'] ?? json['score_asc'],
       scoreAdv: json['score_adv_display'] ?? json['score_adv'],
+      penaltiesAsc: json['penalties_asc_display'] ?? json['penalties_asc'],
+      penaltiesAdv: json['penalties_adv_display'] ?? json['penalties_adv'],
       statut: json['statut'] ?? 'A_VENIR',
       hommeDuMatch: json['homme_du_match'],
       teamAName: json['team_a_name'] ?? 'Equipe A',
