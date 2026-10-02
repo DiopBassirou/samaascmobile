@@ -219,7 +219,15 @@ class MatchProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        await fetchMatches(authProvider);
+        final updatedData = json.decode(utf8.decode(response.bodyBytes));
+        final updatedMatch = MatchGame.fromJson(updatedData);
+        final index = _matches.indexWhere((m) => m.id == matchId);
+        if (index != -1) {
+          _matches[index] = updatedMatch;
+        } else {
+          _matches.add(updatedMatch);
+        }
+        notifyListeners();
       } else {
         debugPrint('Error updating status (Super Admin): ${response.statusCode} ${response.body}');
         throw Exception('Erreur serveur : ${response.body}');
@@ -253,7 +261,15 @@ class MatchProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
-        await fetchMatches(authProvider);
+        final updatedData = json.decode(utf8.decode(response.bodyBytes));
+        final updatedMatch = MatchGame.fromJson(updatedData);
+        final index = _matches.indexWhere((m) => m.id == matchId);
+        if (index != -1) {
+          _matches[index] = updatedMatch;
+        } else {
+          _matches.add(updatedMatch);
+        }
+        notifyListeners();
       } else {
         debugPrint('Error adding event (Super Admin): ${response.statusCode} ${response.body}');
         throw Exception('Erreur serveur : ${response.body}');

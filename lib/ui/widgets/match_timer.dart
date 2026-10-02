@@ -103,7 +103,8 @@ class _MatchTimerState extends State<MatchTimer> {
       ),
       child: Text(
         widget.match.statut == 'MI_TEMPS' ? 'MI-TEMPS' : 
-        widget.match.statut == 'TERMINE' ? 'FIN' : timeString,
+        widget.match.statut == 'TERMINE' ? 'FIN' : 
+        widget.match.statut == 'TIR_AU_BUT' ? 'TIR AU BUT' : timeString,
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,

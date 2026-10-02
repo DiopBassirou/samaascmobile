@@ -122,6 +122,8 @@ class MatchGame {
       dateMatch: json['date_match']?.toString() ?? '',
       scoreAsc: json['score_home'],
       scoreAdv: json['score_away'],
+      penaltiesAsc: json['penalties_asc'],
+      penaltiesAdv: json['penalties_adv'],
       statut: json['statut'] ?? 'A_VENIR',
       teamAName: json['home'] ?? 'Equipe A',
       teamALogo: json['home_logo'],

@@ -437,6 +437,14 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
           title = '🎯 Tir au but : ${match.teamBName}${e.playerName != null ? " (${e.playerName})" : ""}';
           icon = Icons.sports_score;
           iconColor = const Color(0xFFC62828);
+        } else if (e.type == 'RATE_TAB_ASC') {
+          title = '❌ Raté : ${match.teamAName}${e.playerName != null ? " (${e.playerName})" : ""}';
+          icon = Icons.close;
+          iconColor = Colors.grey[700]!;
+        } else if (e.type == 'RATE_TAB_ADV') {
+          title = '❌ Raté : ${match.teamBName}${e.playerName != null ? " (${e.playerName})" : ""}';
+          icon = Icons.close;
+          iconColor = Colors.grey[700]!;
         } else if (e.type == 'MI_TEMPS') {
           title = '⏸️ Mi-Temps';
           icon = Icons.pause_circle_filled;
