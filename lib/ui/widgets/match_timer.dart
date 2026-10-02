@@ -54,7 +54,7 @@ class _MatchTimerState extends State<MatchTimer> {
       seconds = halfLength * 60;
     } else if (widget.match.statut == 'DEUXIEME_MI_TEMPS' && widget.match.secondHalfStartedAt != null) {
       seconds = (halfLength * 60) + now.difference(widget.match.secondHalfStartedAt!).inSeconds;
-    } else if (widget.match.statut == 'TERMINE') {
+    } else if (widget.match.statut == 'TERMINE' || widget.match.statut == 'TIR_AU_BUT') {
       seconds = (halfLength * 2) * 60;
     }
 
