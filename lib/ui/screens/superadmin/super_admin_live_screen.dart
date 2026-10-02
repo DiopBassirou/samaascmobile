@@ -226,7 +226,7 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                             },
                           ),
                         )
-                      else if (updatedMatch.statut == 'EN_COURS' || updatedMatch.statut == 'MI_TEMPS' || updatedMatch.statut == 'DEUXIEME_MI_TEMPS')
+                      else if (updatedMatch.statut == 'EN_COURS' || updatedMatch.statut == 'MI_TEMPS' || updatedMatch.statut == 'DEUXIEME_MI_TEMPS' || (updatedMatch.statut == 'TERMINE' && updatedMatch.scoreAsc == updatedMatch.scoreAdv))
                         Column(
                           children: [
                             Row(
@@ -318,9 +318,10 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                                 ),
                               ),
                             const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
+                            if (updatedMatch.statut != 'TERMINE')
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF0A5C36),
                                   foregroundColor: Colors.white,

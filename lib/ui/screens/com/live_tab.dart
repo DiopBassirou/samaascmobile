@@ -66,8 +66,8 @@ class _LiveTabState extends State<LiveTab> {
                 _buildScoreBoard(context, auth, matchProv, match, isCom),
                 const SizedBox(height: 20),
 
-                // Section Actions Direct (Seulement si Chargé de Com & Match EN_COURS ou MI_TEMPS)
-                if (isCom && (match.statut == 'EN_COURS' || match.statut == 'MI_TEMPS')) ...[
+                // Section Actions Direct (Seulement si Chargé de Com & Match EN_COURS, MI_TEMPS ou TERMINE avec égalité)
+                if (isCom && (match.statut == 'EN_COURS' || match.statut == 'MI_TEMPS' || match.statut == 'DEUXIEME_MI_TEMPS' || (match.statut == 'TERMINE' && match.scoreAsc == match.scoreAdv))) ...[
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -155,8 +155,9 @@ class _LiveTabState extends State<LiveTab> {
                         ),
                         const SizedBox(height: 10),
                         // Status row
-                        Row(
-                          children: [
+                        if (match.statut != 'TERMINE')
+                          Row(
+                            children: [
                             if (match.statut == 'EN_COURS')
                               Expanded(
                                 child: _buildPremiumButton(
@@ -249,8 +250,8 @@ class _LiveTabState extends State<LiveTab> {
                                 },
                               ),
                             ),
-                          ],
-                        ),
+                            ],
+                          ),
                       ],
                     ),
                   ),

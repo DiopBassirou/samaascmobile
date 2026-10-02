@@ -340,8 +340,9 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                       const Text('VS', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold))
                     else
                       Text(
-                        '${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0}',
-                        style: const TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.bold),
+                        '${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0}${match.penaltiesAsc != null ? '\n(${match.penaltiesAsc} TAB ${match.penaltiesAdv})' : ''}',
+                        style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, height: 1.2),
+                        textAlign: TextAlign.center,
                       ),
                     _buildTeam(match.teamBName, Colors.green, logoUrl: match.teamBLogo),
                   ],
