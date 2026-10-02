@@ -678,6 +678,14 @@ class _LiveTabState extends State<LiveTab> {
         } else if (e.type == 'BUT_ADV') {
           title = '⚽ But ${match.teamBName}';
           iconColor = const Color(0xFFC62828);
+        } else if (e.type == 'TIR_AU_BUT_ASC') {
+          title = '🎯 Tir au but : ${match.teamAName}${e.playerName != null ? " (${e.playerName})" : ""}';
+          icon = Icons.sports_score;
+          iconColor = const Color(0xFF2E7D32);
+        } else if (e.type == 'TIR_AU_BUT_ADV') {
+          title = '🎯 Tir au but : ${match.teamBName}${e.playerName != null ? " (${e.playerName})" : ""}';
+          icon = Icons.sports_score;
+          iconColor = const Color(0xFFC62828);
         } else if (e.type == 'MI_TEMPS') {
           title = '⏸️ Mi-Temps';
           icon = Icons.pause_circle_filled;
@@ -849,7 +857,7 @@ class _LiveTabState extends State<LiveTab> {
                           playerId: finalPlayerId,
                           playerName: playerName,
                           minute: minute,
-                          description: isAsc ? 'But de ${playerName ?? "l\'équipe"} ($minute\')' : 'But adverse ($minute\')',
+                          description: isAsc ? 'But de ${playerName ?? match.teamAName} ($minute\')' : 'But de ${match.teamBName} ($minute\')',
                         );
                       } else {
                         await matchProv.addMatchEvent(

@@ -80,7 +80,7 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                     isAsc ? 'BUT_ASC' : 'BUT_ADV',
                     playerName: playerName,
                     minute: minute,
-                    description: isAsc ? 'But de ${playerName ?? "l\'équipe"} ($minute\')' : 'But adverse ($minute\')',
+                    description: isAsc ? 'But de ${playerName ?? match.teamAName} ($minute\')' : 'But de ${match.teamBName} ($minute\')',
                   );
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (mounted) {
@@ -172,7 +172,13 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                               Text(updatedMatch.teamAName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                             ],
                           ),
-                          Text('${updatedMatch.scoreAsc ?? 0} - ${updatedMatch.scoreAdv ?? 0}', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
+                          Column(
+                            children: [
+                              Text('${updatedMatch.scoreAsc ?? 0} - ${updatedMatch.scoreAdv ?? 0}', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
+                              if (updatedMatch.penaltiesAsc != null && updatedMatch.penaltiesAdv != null)
+                                Text('(${updatedMatch.penaltiesAsc} TAB ${updatedMatch.penaltiesAdv})', style: const TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                           Column(
                             children: [
                               TeamLogo(teamName: updatedMatch.teamBName, logoUrl: updatedMatch.teamBLogo, fallbackColor: const Color(0xFFC62828), size: 50),
@@ -240,6 +246,44 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                                     const Color(0xFFC62828),
                                     Icons.sports_soccer,
                                     () => _showSuperAdminAddGoalDialog(context, auth, matchProv, updatedMatch, false),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildPremiumButton(
+                                    '🎯 TAB ${updatedMatch.teamAName}',
+                                    const Color(0xFF2E7D32).withValues(alpha: 0.8),
+                                    Icons.sports_score,
+                                    () async {
+                                      try {
+                                        await matchProv.addMatchEvent(auth, updatedMatch.id, 'TIR_AU_BUT_ASC', description: 'Tir au but réussi');
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildPremiumButton(
+                                    '🎯 TAB ${updatedMatch.teamBName}',
+                                    const Color(0xFFC62828).withValues(alpha: 0.8),
+                                    Icons.sports_score,
+                                    () async {
+                                      try {
+                                        await matchProv.addMatchEvent(auth, updatedMatch.id, 'TIR_AU_BUT_ADV', description: 'Tir au but réussi');
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                        }
+                                      }
+                                    },
                                   ),
                                 ),
                               ],

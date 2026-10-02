@@ -32,6 +32,10 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
   bool _hasScore = false;
   final _scoreAController = TextEditingController(text: '0');
   final _scoreBController = TextEditingController(text: '0');
+  
+  bool _hasPenalties = false;
+  final _penaltiesAController = TextEditingController();
+  final _penaltiesBController = TextEditingController();
 
   bool _isSubmitting = false;
   bool _isLoadingMatches = false;
@@ -242,6 +246,53 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: const Text('Match terminé aux tirs au but ?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      value: _hasPenalties,
+                      activeThumbColor: const Color(0xFF0A5C36),
+                      onChanged: (val) => setState(() => _hasPenalties = val),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    if (_hasPenalties) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _penaltiesAController,
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                              decoration: InputDecoration(
+                                labelText: 'TAB Éq. A',
+                                filled: true,
+                                fillColor: Colors.green.withValues(alpha: 0.05),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                            ),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text('TAB', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey)),
+                          ),
+                          Expanded(
+                            child: TextField(
+                              controller: _penaltiesBController,
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                              decoration: InputDecoration(
+                                labelText: 'TAB Éq. B',
+                                filled: true,
+                                fillColor: Colors.red.withValues(alpha: 0.05),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                   const SizedBox(height: 24),
 
@@ -716,7 +767,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                     isAsc ? 'BUT_ASC' : 'BUT_ADV',
                     playerName: playerName,
                     minute: minute,
-                    description: isAsc ? 'But de ${playerName ?? "l\'équipe"} ($minute\')' : 'But adverse ($minute\')',
+                    description: isAsc ? 'But de ${playerName ?? match.teamAName} ($minute\')' : 'But de ${match.teamBName} ($minute\')',
                   );
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (mounted) {
@@ -791,6 +842,8 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
         phase: _matchPhase,
         scoreA: _hasScore ? int.tryParse(_scoreAController.text) : null,
         scoreB: _hasScore ? int.tryParse(_scoreBController.text) : null,
+        penaltiesA: _hasPenalties ? int.tryParse(_penaltiesAController.text) : null,
+        penaltiesB: _hasPenalties ? int.tryParse(_penaltiesBController.text) : null,
       );
 
       if (!mounted) return;
@@ -830,6 +883,9 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     
     final scoreAController = TextEditingController(text: (match['score_asc'] ?? 0).toString());
     final scoreBController = TextEditingController(text: (match['score_adv'] ?? 0).toString());
+    
+    final penaltiesAController = TextEditingController(text: (match['penalties_asc'] ?? '').toString());
+    final penaltiesBController = TextEditingController(text: (match['penalties_adv'] ?? '').toString());
     
     // Statut modifiable
     const statuts = ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'DEUXIEME_MI_TEMPS', 'TERMINE', 'REPORTE'];
@@ -952,6 +1008,14 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                     Expanded(child: TextField(controller: scoreBController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Score ADV', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))))),
                   ],
                 ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: TextField(controller: penaltiesAController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'TAB ASC', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))))),
+                    const Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('TAB', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey))),
+                    Expanded(child: TextField(controller: penaltiesBController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'TAB ADV', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))))),
+                  ],
+                ),
               ],
             ),
           ),
@@ -971,6 +1035,8 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                           'statut': matchStatut,
                           'score_asc': int.tryParse(scoreAController.text) ?? 0,
                           'score_adv': int.tryParse(scoreBController.text) ?? 0,
+                          'penalties_asc': int.tryParse(penaltiesAController.text),
+                          'penalties_adv': int.tryParse(penaltiesBController.text),
                         };
                         if (teamAId != null) data['poule_team_a_id'] = teamAId;
                         if (teamBId != null) data['poule_team_b_id'] = teamBId;

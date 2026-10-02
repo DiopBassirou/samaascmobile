@@ -212,6 +212,8 @@ class AscService {
     String? phase,
     int? scoreA,
     int? scoreB,
+    int? penaltiesA,
+    int? penaltiesB,
   }) async {
     final token = await _getToken();
     final body = <String, dynamic>{
@@ -225,6 +227,10 @@ class AscService {
     if (scoreA != null && scoreB != null) {
       body['score_a'] = scoreA;
       body['score_b'] = scoreB;
+    }
+    if (penaltiesA != null && penaltiesB != null) {
+      body['penalties_asc'] = penaltiesA;
+      body['penalties_adv'] = penaltiesB;
     }
 
     final response = await http.post(
@@ -246,7 +252,7 @@ class AscService {
   }
 
   /// Modifier le score d'un match existant (Super Admin)
-  Future<Map<String, dynamic>> updateSuperAdminMatchScore(int matchId, int scoreAsc, int scoreAdv, {String statut = 'TERMINE'}) async {
+  Future<Map<String, dynamic>> updateSuperAdminMatchScore(int matchId, int scoreAsc, int scoreAdv, {int? penaltiesAsc, int? penaltiesAdv, String statut = 'TERMINE'}) async {
     final token = await _getToken();
     final response = await http.put(
       Uri.parse('$_baseUrl/superadmin/matches/$matchId/score'),
@@ -258,6 +264,8 @@ class AscService {
       body: jsonEncode({
         'score_asc': scoreAsc,
         'score_adv': scoreAdv,
+        if (penaltiesAsc != null) 'penalties_asc': penaltiesAsc,
+        if (penaltiesAdv != null) 'penalties_adv': penaltiesAdv,
         'statut': statut,
       }),
     );
