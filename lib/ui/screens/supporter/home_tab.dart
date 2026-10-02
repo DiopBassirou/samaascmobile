@@ -52,7 +52,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
   Widget build(BuildContext context) {
     return Consumer2<MatchProvider, NewsProvider>(
       builder: (context, matchProvider, newsProvider, child) {
-        final currentMatches = matchProvider.matches.where((m) => m.statut == 'EN_COURS' || m.statut == 'MI_TEMPS' || m.statut == 'DEUXIEME_MI_TEMPS').toList();
+        final currentMatches = matchProvider.matches.where((m) => m.statut == 'EN_COURS' || m.statut == 'MI_TEMPS' || m.statut == 'DEUXIEME_MI_TEMPS' || m.statut == 'TIR_AU_BUT').toList();
         final nextMatches = matchProvider.matches.where((m) => m.statut == 'A_VENIR' || m.statut == 'REPORTE').toList();
         final lastMatches = matchProvider.matches.where((m) => m.statut == 'TERMINE').toList();
         lastMatches.sort((a, b) => b.dateMatch.compareTo(a.dateMatch)); // desc
@@ -249,7 +249,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
   }
 
   Widget _buildMatchCard(MatchGame match, AuthProvider authProvider) {
-    final isLive = match.statut == 'EN_COURS' || match.statut == 'MI_TEMPS' || match.statut == 'DEUXIEME_MI_TEMPS';
+    final isLive = match.statut == 'EN_COURS' || match.statut == 'MI_TEMPS' || match.statut == 'DEUXIEME_MI_TEMPS' || match.statut == 'TIR_AU_BUT';
     final isNext = match.statut == 'A_VENIR' || match.statut == 'REPORTE';
 
     return Padding(
@@ -305,7 +305,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                           ],
                           Text(
                             isLive
-                                ? (match.statut == 'MI_TEMPS' ? '⏸ MI-TEMPS' : match.statut == 'DEUXIEME_MI_TEMPS' ? '🔴 2ème MT' : '🔴 1ère MT')
+                                ? (match.statut == 'MI_TEMPS' ? '⏸ MI-TEMPS' : match.statut == 'DEUXIEME_MI_TEMPS' ? '🔴 2ème MT' : match.statut == 'TIR_AU_BUT' ? '🎯 TIR AU BUT' : '🔴 1ère MT')
                                 : (match.statut == 'REPORTE' ? '⚠️ REPORTÉ' : (isNext ? '🗓 PROCHAIN MATCH' : '✅ DERNIER MATCH')),
                             style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                           ),

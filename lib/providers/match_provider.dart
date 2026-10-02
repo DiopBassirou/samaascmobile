@@ -13,7 +13,7 @@ class MatchProvider with ChangeNotifier {
 
   /// Match en direct : EN_COURS ou MI_TEMPS (le plus récent)
   MatchGame? get currentMatch {
-    final liveMatches = _matches.where((m) => m.statut == 'EN_COURS' || m.statut == 'MI_TEMPS').toList();
+    final liveMatches = _matches.where((m) => m.statut == 'EN_COURS' || m.statut == 'MI_TEMPS' || m.statut == 'DEUXIEME_MI_TEMPS' || m.statut == 'TIR_AU_BUT').toList();
     if (liveMatches.isEmpty) return null;
     liveMatches.sort((a, b) => b.dateMatch.compareTo(a.dateMatch));
     return liveMatches.first;
@@ -198,6 +198,34 @@ class MatchProvider with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error adding match event: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> superAdminUpdateMatchStatus(AuthProvider authProvider, int matchId, String statut) async {
+    final token = authProvider.token;
+    if (token == null) return;
+
+    try {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://127.0.0.1:8000/api';
+      final response = await http.put(
+        Uri.parse('$apiUrl/superadmin/matches/$matchId/status'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode({'statut': statut}),
+      );
+
+      if (response.statusCode == 200) {
+        await fetchMatches(authProvider);
+      } else {
+        debugPrint('Error updating status (Super Admin): ${response.statusCode} ${response.body}');
+        throw Exception('Erreur serveur : ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Error updating match status (Super Admin): $e');
       rethrow;
     }
   }

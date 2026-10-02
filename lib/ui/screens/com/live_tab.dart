@@ -66,8 +66,8 @@ class _LiveTabState extends State<LiveTab> {
                 _buildScoreBoard(context, auth, matchProv, match, isCom),
                 const SizedBox(height: 20),
 
-                // Section Actions Direct (Seulement si Chargé de Com & Match EN_COURS, MI_TEMPS ou TERMINE avec égalité)
-                if (isCom && (match.statut == 'EN_COURS' || match.statut == 'MI_TEMPS' || match.statut == 'DEUXIEME_MI_TEMPS' || (match.statut == 'TERMINE' && match.scoreAsc == match.scoreAdv))) ...[
+                // Section Actions Direct (Seulement si Chargé de Com & Match actif ou TIR_AU_BUT)
+                if (isCom && (match.statut == 'EN_COURS' || match.statut == 'MI_TEMPS' || match.statut == 'DEUXIEME_MI_TEMPS' || match.statut == 'TIR_AU_BUT')) ...[
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -93,69 +93,173 @@ class _LiveTabState extends State<LiveTab> {
                           ],
                         ),
                         const SizedBox(height: 14),
-                        // Goals row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildPremiumButton(
-                                '⚽ ${match.teamAName}',
-                                const Color(0xFF2E7D32),
-                                Icons.sports_soccer,
-                                () => _showAddGoalDialog(context, auth, matchProv, playerProv, match, true),
+
+                        // --- PHASE TIR AU BUT ---
+                        if (match.statut == 'TIR_AU_BUT') ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF1A237E), Color(0xFF283593)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [BoxShadow(color: Colors.indigo.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _buildPremiumButton(
-                                '⚽ ${match.teamBName}',
-                                const Color(0xFFC62828),
-                                Icons.sports_soccer,
-                                () => _showAddGoalDialog(context, auth, matchProv, playerProv, match, false),
-                              ),
+                            child: Column(
+                              children: [
+                                const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.sports_score, color: Colors.amber, size: 24),
+                                    SizedBox(width: 8),
+                                    Text('🎯 SÉANCE DE TIR AU BUT', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.sports_score, color: Colors.amber, size: 24),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Column(
+                                      children: [
+                                        Text(match.teamAName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                                        const SizedBox(height: 8),
+                                        Text('${match.penaltiesAsc ?? 0}', style: const TextStyle(color: Colors.greenAccent, fontSize: 42, fontWeight: FontWeight.w900)),
+                                      ],
+                                    ),
+                                    const Text('TAB', style: TextStyle(color: Colors.white54, fontSize: 18, fontWeight: FontWeight.bold)),
+                                    Column(
+                                      children: [
+                                        Text(match.teamBName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                                        const SizedBox(height: 8),
+                                        Text('${match.penaltiesAdv ?? 0}', style: const TextStyle(color: Colors.redAccent, fontSize: 42, fontWeight: FontWeight.w900)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF2E7D32),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                        icon: const Icon(Icons.sports_score, size: 20),
+                                        label: Text('✅ ${match.teamAName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
+                                        onPressed: () async {
+                                          try {
+                                            await matchProv.addMatchEvent(auth, match.id, 'TIR_AU_BUT_ASC', description: 'Tir au but réussi');
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                            }
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFFC62828),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                        icon: const Icon(Icons.sports_score, size: 20),
+                                        label: Text('✅ ${match.teamBName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
+                                        onPressed: () async {
+                                          try {
+                                            await matchProv.addMatchEvent(auth, match.id, 'TIR_AU_BUT_ADV', description: 'Tir au but réussi');
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                            }
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildPremiumButton(
-                                '🎯 TAB ${match.teamAName}',
-                                const Color(0xFF2E7D32).withValues(alpha: 0.8),
-                                Icons.sports_score,
-                                () async {
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: _buildPremiumButton(
+                              '🏁 Terminer le Match',
+                              const Color(0xFF0A5C36),
+                              Icons.flag,
+                              () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    title: const Text('🏁 Terminer le match ?'),
+                                    content: Text('Score : ${match.teamAName} ${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0} ${match.teamBName}\nTAB : ${match.penaltiesAsc ?? 0} - ${match.penaltiesAdv ?? 0}'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                                        onPressed: () => Navigator.pop(ctx, true),
+                                        child: const Text('Confirmer'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
                                   try {
-                                    await matchProv.addMatchEvent(auth, match.id, 'TIR_AU_BUT_ASC', description: 'Tir au but réussi');
+                                    await matchProv.updateMatchStatus(auth, match.id, 'TERMINE');
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('🏁 Match Terminé !'), backgroundColor: Color(0xFF2E7D32)),
+                                      );
+                                    }
                                   } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                                      );
                                     }
                                   }
-                                },
-                              ),
+                                }
+                              },
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _buildPremiumButton(
-                                '🎯 TAB ${match.teamBName}',
-                                const Color(0xFFC62828).withValues(alpha: 0.8),
-                                Icons.sports_score,
-                                () async {
-                                  try {
-                                    await matchProv.addMatchEvent(auth, match.id, 'TIR_AU_BUT_ADV', description: 'Tir au but réussi');
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-                                    }
-                                  }
-                                },
+                          ),
+                        ] else ...[
+                          // --- PHASE MATCH NORMAL ---
+                          // Goals row
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildPremiumButton(
+                                  '⚽ ${match.teamAName}',
+                                  const Color(0xFF2E7D32),
+                                  Icons.sports_soccer,
+                                  () => _showAddGoalDialog(context, auth, matchProv, playerProv, match, true),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        // Status row
-                        if (match.statut != 'TERMINE')
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _buildPremiumButton(
+                                  '⚽ ${match.teamBName}',
+                                  const Color(0xFFC62828),
+                                  Icons.sports_soccer,
+                                  () => _showAddGoalDialog(context, auth, matchProv, playerProv, match, false),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          // Status row
                           Row(
                             children: [
                             if (match.statut == 'EN_COURS')
@@ -208,50 +312,60 @@ class _LiveTabState extends State<LiveTab> {
                                 ),
                               ),
                             const SizedBox(width: 10),
+                            // Si score nul → "Tir au But", sinon "Sifflet Final"
                             Expanded(
-                              child: _buildPremiumButton(
-                                '🏁 Sifflet Final',
-                                const Color(0xFF212121),
-                                Icons.flag,
-                                () async {
-                                  // Confirmer avant de terminer
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                      title: const Text('🏁 Sifflet Final ?'),
-                                      content: Text('Confirmer la fin du match ?\n\nScore final : ${match.teamAName} ${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0} ${match.teamBName}'),
-                                      actions: [
-                                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF212121)),
-                                          onPressed: () => Navigator.pop(ctx, true),
-                                          child: const Text('Terminer le Match', style: TextStyle(color: Colors.white)),
+                              child: (match.scoreAsc == match.scoreAdv)
+                                ? _buildPremiumButton(
+                                    '🎯 Tir au But',
+                                    const Color(0xFF1A237E),
+                                    Icons.sports_score,
+                                    () async {
+                                      await matchProv.updateMatchStatus(auth, match.id, 'TIR_AU_BUT');
+                                    },
+                                  )
+                                : _buildPremiumButton(
+                                    '🏁 Sifflet Final',
+                                    const Color(0xFF212121),
+                                    Icons.flag,
+                                    () async {
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                          title: const Text('🏁 Sifflet Final ?'),
+                                          content: Text('Score final : ${match.teamAName} ${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0} ${match.teamBName}'),
+                                          actions: [
+                                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF212121)),
+                                              onPressed: () => Navigator.pop(ctx, true),
+                                              child: const Text('Terminer le Match', style: TextStyle(color: Colors.white)),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    try {
-                                      await matchProv.updateMatchStatus(auth, match.id, 'TERMINE');
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('🏁 Match Terminé ! Classement recalculé.'), backgroundColor: Color(0xFF2E7D32)),
-                                        );
+                                      );
+                                      if (confirm == true) {
+                                        try {
+                                          await matchProv.updateMatchStatus(auth, match.id, 'TERMINE');
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('🏁 Match Terminé ! Classement recalculé.'), backgroundColor: Color(0xFF2E7D32)),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                                            );
+                                          }
+                                        }
                                       }
-                                    } catch (e) {
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
-                                        );
-                                      }
-                                    }
-                                  }
-                                },
-                              ),
+                                    },
+                                  ),
                             ),
                             ],
                           ),
+                        ],
                       ],
                     ),
                   ),
@@ -470,6 +584,10 @@ class _LiveTabState extends State<LiveTab> {
       case 'DEUXIEME_MI_TEMPS':
         badgeColor = Colors.red;
         badgeText = '🔴 2ème MI-TEMPS';
+        break;
+      case 'TIR_AU_BUT':
+        badgeColor = const Color(0xFF1A237E);
+        badgeText = '🎯 TIR AU BUT';
         break;
       case 'TERMINE':
         badgeColor = Colors.grey[700]!;

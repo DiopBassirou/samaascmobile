@@ -80,10 +80,10 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
           if (_matchStatusFilter == 'TERMINE') {
             isSameStatus = (st == 'TERMINE');
           } else if (_matchStatusFilter == 'EN_COURS') {
-            isSameStatus = (st == 'EN_COURS' || st == 'MI_TEMPS' || st == 'DEUXIEME_MI_TEMPS');
+            isSameStatus = (st == 'EN_COURS' || st == 'MI_TEMPS' || st == 'DEUXIEME_MI_TEMPS' || st == 'TIR_AU_BUT');
           } else {
             // A_VENIR ou autre
-            isSameStatus = (st != 'TERMINE' && st != 'EN_COURS' && st != 'MI_TEMPS' && st != 'DEUXIEME_MI_TEMPS');
+            isSameStatus = (st != 'TERMINE' && st != 'EN_COURS' && st != 'MI_TEMPS' && st != 'DEUXIEME_MI_TEMPS' && st != 'TIR_AU_BUT');
           }
           return isSameCategory && isSameStatus;
         }).toList();
@@ -388,7 +388,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
   Widget _buildMatchCard(Map<String, dynamic> match) {
     final statut = match['statut'] ?? 'A_VENIR';
     final isTermine = statut == 'TERMINE';
-    final isLive = statut == 'EN_COURS' || statut == 'MI_TEMPS' || statut == 'DEUXIEME_MI_TEMPS';
+    final isLive = statut == 'EN_COURS' || statut == 'MI_TEMPS' || statut == 'DEUXIEME_MI_TEMPS' || statut == 'TIR_AU_BUT';
     final isReporte = statut == 'REPORTE';
 
     // Noms des équipes
@@ -888,7 +888,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     final penaltiesBController = TextEditingController(text: (match['penalties_adv'] ?? '').toString());
     
     // Statut modifiable
-    const statuts = ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'DEUXIEME_MI_TEMPS', 'TERMINE', 'REPORTE'];
+    const statuts = ['A_VENIR', 'EN_COURS', 'MI_TEMPS', 'DEUXIEME_MI_TEMPS', 'TIR_AU_BUT', 'TERMINE', 'REPORTE'];
     String matchStatut = statuts.contains(match['statut']) ? match['statut'] : 'A_VENIR';
     
     bool isLoading = false;
@@ -995,7 +995,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                   initialValue: matchStatut,
                   decoration: InputDecoration(labelText: 'Statut', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                   items: statuts.map((s) => DropdownMenuItem(value: s, child: Text(
-                    s == 'A_VENIR' ? 'A venir' : s == 'EN_COURS' ? 'En cours (1ère MT)' : s == 'MI_TEMPS' ? 'Mi-temps' : s == 'DEUXIEME_MI_TEMPS' ? 'En cours (2ème MT)' : s == 'REPORTE' ? 'Reporté' : 'Terminé',
+                    s == 'A_VENIR' ? 'A venir' : s == 'EN_COURS' ? 'En cours (1ère MT)' : s == 'MI_TEMPS' ? 'Mi-temps' : s == 'DEUXIEME_MI_TEMPS' ? 'En cours (2ème MT)' : s == 'TIR_AU_BUT' ? 'Tir au But' : s == 'REPORTE' ? 'Reporté' : 'Terminé',
                   ))).toList(),
                   onChanged: (val) => setStateDialog(() => matchStatut = val!),
                 ),
