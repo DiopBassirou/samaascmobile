@@ -564,111 +564,41 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
       }
     }
 
-    final logoTJ = getLogo('TOP JEUNESSE');
-    final logoJK = getLogo('JOKKO');
-    final logoSE = getLogo('SUPER ETOILE');
-    final logoMD = getLogo('MEDINE');
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0F172A), Color(0xFF000000)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFF59E0B).withOpacity(0.3),
-            blurRadius: 15,
-            spreadRadius: 2,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3), width: 1.5),
-      ),
-      child: Stack(
+    Widget buildImageWithLogos(String path, String t1, String t2, Color c1, Color c2) {
+      return Stack(
         children: [
-          Positioned(
-            top: -50, left: -50,
-            child: Container(
-              width: 150, height: 150,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFEF4444).withOpacity(0.15), boxShadow: [BoxShadow(color: const Color(0xFFEF4444).withOpacity(0.15), blurRadius: 100)]),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.asset(path, width: double.infinity, fit: BoxFit.cover),
+          ),
+          Positioned.fill(
+            child: Align(
+              alignment: const Alignment(-0.82, -0.25),
+              child: Container(
+                decoration: const BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black87, blurRadius: 15, spreadRadius: 8)]),
+                child: TeamLogo(teamName: t1, logoUrl: getLogo(t1), fallbackColor: c1, size: 60),
+              ),
             ),
           ),
-          Positioned(
-            bottom: -50, right: -50,
-            child: Container(
-              width: 150, height: 150,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF3B82F6).withOpacity(0.15), boxShadow: [BoxShadow(color: const Color(0xFF3B82F6).withOpacity(0.15), blurRadius: 100)]),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                const Text('🔥 LE CHOC DES 1/2 FINALES 🔥', style: TextStyle(color: Color(0xFFFCA5A5), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                const SizedBox(height: 5),
-                const Text('1/2 FINALES', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 2)),
-                const SizedBox(height: 20),
-                _buildPromoMatchRow('TJ', 'TOP JEUNESSE', 'JK', 'JOKKO', 'Historique : Jokko 2 - 0 Top Jeunesse', [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)], [const Color(0xFF7F1D1D), const Color(0xFFEF4444)], logoTJ, logoJK),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Divider(color: Colors.white24, height: 1),
-                ),
-                _buildPromoMatchRow('SE', 'SUPER ETOILE', 'MD', 'MEDINE', 'Historique : Super Etoile 2 - 1 Medine', [const Color(0xFF78350F), const Color(0xFFF59E0B)], [const Color(0xFF064E3B), const Color(0xFF10B981)], logoSE, logoMD),
-                const SizedBox(height: 15),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text('RESTEZ CONNECTÉS POUR LES DATES', style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-              ],
+          Positioned.fill(
+            child: Align(
+              alignment: const Alignment(0.82, -0.25),
+              child: Container(
+                decoration: const BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black87, blurRadius: 15, spreadRadius: 8)]),
+                child: TeamLogo(teamName: t2, logoUrl: getLogo(t2), fallbackColor: c2, size: 60),
+              ),
             ),
           ),
         ],
-      ),
-    );
-  }
+      );
+    }
 
-  Widget _buildPromoMatchRow(String logo1, String name1, String logo2, String name2, String history, List<Color> colors1, List<Color> colors2, String? url1, String? url2) {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                children: [
-                  TeamLogo(teamName: name1, logoUrl: url1, fallbackColor: colors1.first, size: 45),
-                  const SizedBox(height: 6),
-                  Text(name1, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFFEF4444), Color(0xFF991B1B)]), borderRadius: BorderRadius.circular(8)),
-              child: const Text('VS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic)),
-            ),
-            Expanded(
-              child: Column(
-                children: [
-                  TeamLogo(teamName: name2, logoUrl: url2, fallbackColor: colors2.first, size: 45),
-                  const SizedBox(height: 6),
-                  Text(name2, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(history, style: const TextStyle(color: Colors.white54, fontSize: 10, fontStyle: FontStyle.italic)),
+        buildImageWithLogos('assets/images/demi_finale_1.png', 'TOP JEUNESSE', 'JOKKO', const Color(0xFF1E3A8A), const Color(0xFF7F1D1D)),
+        const SizedBox(height: 15),
+        buildImageWithLogos('assets/images/demi_finale_2.png', 'SUPER ETOILE', 'MEDINE', const Color(0xFF78350F), const Color(0xFF064E3B)),
+        const SizedBox(height: 20),
       ],
     );
   }
