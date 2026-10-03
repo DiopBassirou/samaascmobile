@@ -301,7 +301,7 @@ class _MainShellState extends State<MainShell> {
               label: 'PROCHAIN MATCH', 
               value: matchProvider.nextMatch != null 
                   ? matchProvider.nextMatch!.teamBName 
-                  : (matchProvider.currentMatch != null ? 'EN COURS' : 'Aucun')
+                  : (matchProvider.currentMatch != null ? 'EN COURS' : '1/2 FINALE')
             ),
           ],
           'tabs': const [

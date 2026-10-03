@@ -553,39 +553,34 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
       return const SizedBox.shrink();
     }
 
-    String? getLogo(String teamName) {
-      try {
-        final m = matchProvider.matches.firstWhere(
-          (m) => m.teamAName.toUpperCase().contains(teamName) || m.teamBName.toUpperCase().contains(teamName),
-        );
-        return m.teamAName.toUpperCase().contains(teamName) ? m.teamALogo : m.teamBLogo;
-      } catch (_) {
-        return null;
-      }
-    }
-
-    Widget buildImageWithLogos(String path, String t1, String t2, Color c1, Color c2) {
+    Widget buildImageWithLogos(String path, String logo1Path, String logo2Path) {
       return Stack(
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: Image.asset(path, width: double.infinity, fit: BoxFit.cover),
+            child: Image.asset(path, width: double.infinity),
           ),
           Positioned.fill(
             child: Align(
-              alignment: const Alignment(-0.82, -0.25),
+              alignment: const Alignment(-0.90, -0.55),
               child: Container(
-                decoration: const BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black87, blurRadius: 15, spreadRadius: 8)]),
-                child: TeamLogo(teamName: t1, logoUrl: getLogo(t1), fallbackColor: c1, size: 60),
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black87, blurRadius: 15, spreadRadius: 8)]),
+                child: ClipOval(
+                  child: Image.asset(logo1Path, width: 70, height: 70, fit: BoxFit.cover),
+                ),
               ),
             ),
           ),
           Positioned.fill(
             child: Align(
-              alignment: const Alignment(0.82, -0.25),
+              alignment: const Alignment(0.90, -0.55),
               child: Container(
-                decoration: const BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black87, blurRadius: 15, spreadRadius: 8)]),
-                child: TeamLogo(teamName: t2, logoUrl: getLogo(t2), fallbackColor: c2, size: 60),
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black87, blurRadius: 15, spreadRadius: 8)]),
+                child: ClipOval(
+                  child: Image.asset(logo2Path, width: 70, height: 70, fit: BoxFit.cover),
+                ),
               ),
             ),
           ),
@@ -595,9 +590,9 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
 
     return Column(
       children: [
-        buildImageWithLogos('assets/images/demi_finale_1.png', 'TOP JEUNESSE', 'JOKKO', const Color(0xFF1E3A8A), const Color(0xFF7F1D1D)),
+        buildImageWithLogos('assets/images/demi_finale_1.png', 'assets/images/logo_tj.png', 'assets/images/logo_jk.png'),
         const SizedBox(height: 15),
-        buildImageWithLogos('assets/images/demi_finale_2.png', 'SUPER ETOILE', 'MEDINE', const Color(0xFF78350F), const Color(0xFF064E3B)),
+        buildImageWithLogos('assets/images/demi_finale_2.png', 'assets/images/logo_se.png', 'assets/images/logo_md.png'),
         const SizedBox(height: 20),
       ],
     );
