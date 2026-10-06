@@ -588,11 +588,51 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
       );
     }
 
+    Widget infoRow(IconData icon, String text) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFFFFC107), size: 20),
+            const SizedBox(width: 10),
+            Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14))),
+          ],
+        ),
+      );
+    }
+
+    final scheduleCard = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFF0D1B3E), Color(0xFF1A2A5E)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFC107).withValues(alpha: 0.6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Center(
+            child: Text('ZONE 2A • DEMI-FINALES', style: TextStyle(color: Color(0xFFFFC107), fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1)),
+          ),
+          const SizedBox(height: 10),
+          infoRow(Icons.calendar_month, 'Lundi 12 Octobre 2026'),
+          infoRow(Icons.stadium, 'Stade Caroline Faye'),
+          infoRow(Icons.schedule, '18h00 : Jokko vs Top Jeunesse'),
+          infoRow(Icons.schedule, '20h00 : Médine vs Super Étoile'),
+          infoRow(Icons.confirmation_number, 'Entrée : 1000 F'),
+          MatchCountdown(dateMatch: DateTime(2026, 10, 12, 18, 0)),
+        ],
+      ),
+    );
+
     return Column(
       children: [
         buildImageWithLogos('assets/images/demi_finale_1.png', 'assets/images/logo_tj.png', 'assets/images/logo_jk.png'),
         const SizedBox(height: 15),
         buildImageWithLogos('assets/images/demi_finale_2.png', 'assets/images/logo_se.png', 'assets/images/logo_md.png'),
+        const SizedBox(height: 15),
+        scheduleCard,
         const SizedBox(height: 20),
       ],
     );
