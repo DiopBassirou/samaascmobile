@@ -60,11 +60,14 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
         
         final lastMatch = lastMatches.isNotEmpty ? lastMatches.first : null;
 
+        // Matchs terminés il y a moins de 24h (aujourd'hui / hier) : toujours visibles
+        final recentFinished = lastMatches.where((m) => m.isToday || m.isYesterday).toList();
+
         List<MatchGame> matchesToDisplay = [];
         if (currentMatches.isNotEmpty) {
           matchesToDisplay = currentMatches;
-        } else if (nextMatches.isNotEmpty) {
-          matchesToDisplay = nextMatches;
+        } else if (recentFinished.isNotEmpty || nextMatches.isNotEmpty) {
+          matchesToDisplay = [...recentFinished, ...nextMatches];
         } else if (lastMatches.isNotEmpty) {
           matchesToDisplay = lastMatches.take(2).toList();
         }
@@ -307,7 +310,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                           Text(
                             isLive
                                 ? (match.statut == 'MI_TEMPS' ? '⏸ MI-TEMPS' : match.statut == 'DEUXIEME_MI_TEMPS' ? '🔴 2ème MT' : match.statut == 'TIR_AU_BUT' ? '🎯 TIR AU BUT' : '🔴 1ère MT')
-                                : (match.statut == 'REPORTE' ? '⚠️ REPORTÉ' : (isNext ? '🗓 PROCHAIN MATCH' : '✅ DERNIER MATCH')),
+                                : (match.statut == 'REPORTE' ? '⚠️ REPORTÉ' : (isNext ? '🗓 PROCHAIN MATCH' : ((match.penaltiesAsc != null || match.penaltiesAdv != null) ? '🎯 TERMINÉ AUX TIRS AU BUT' : '✅ DERNIER MATCH'))),
                             style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -341,7 +344,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                       const Text('VS', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold))
                     else
                       Text(
-                        '${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0}${match.penaltiesAsc != null ? '\n(${match.penaltiesAsc} TAB ${match.penaltiesAdv})' : ''}',
+                        '${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0}${(match.penaltiesAsc != null || match.penaltiesAdv != null) ? '\n(${match.penaltiesAsc ?? 0} TAB ${match.penaltiesAdv ?? 0})' : ''}',
                         style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, height: 1.2),
                         textAlign: TextAlign.center,
                       ),
@@ -553,37 +556,31 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
       return const SizedBox.shrink();
     }
 
-    Widget buildImageWithLogos(String path, String logo1Path, String logo2Path) {
+    Widget buildImageWithLogos(String path, String? logo1Path, String? logo2Path, {double ax = 0.90, double ay = -0.55, double size = 70}) {
+      Widget logo(String? p, double x) {
+        if (p == null) return const SizedBox.shrink();
+        return Positioned.fill(
+          child: Align(
+            alignment: Alignment(x, ay),
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black87, blurRadius: 15, spreadRadius: 6)]),
+              child: ClipOval(
+                child: Image.asset(p, width: size, height: size, fit: BoxFit.cover),
+              ),
+            ),
+          ),
+        );
+      }
+
       return Stack(
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: Image.asset(path, width: double.infinity),
           ),
-          Positioned.fill(
-            child: Align(
-              alignment: const Alignment(-0.90, -0.55),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black87, blurRadius: 15, spreadRadius: 8)]),
-                child: ClipOval(
-                  child: Image.asset(logo1Path, width: 70, height: 70, fit: BoxFit.cover),
-                ),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: Align(
-              alignment: const Alignment(0.90, -0.55),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black87, blurRadius: 15, spreadRadius: 8)]),
-                child: ClipOval(
-                  child: Image.asset(logo2Path, width: 70, height: 70, fit: BoxFit.cover),
-                ),
-              ),
-            ),
-          ),
+          logo(logo1Path, -ax),
+          logo(logo2Path, ax),
         ],
       );
     }
@@ -618,16 +615,26 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
           const SizedBox(height: 10),
           infoRow(Icons.calendar_month, 'Lundi 12 Octobre 2026'),
           infoRow(Icons.stadium, 'Stade Caroline Faye'),
+          infoRow(Icons.sports, 'SENIORS'),
           infoRow(Icons.schedule, '18h00 : Jokko vs Top Jeunesse'),
           infoRow(Icons.schedule, '20h00 : Médine vs Super Étoile'),
+          infoRow(Icons.sports, 'CADETS (même jour)'),
+          infoRow(Icons.schedule, '15h30 : Médine vs Médine Extension'),
+          infoRow(Icons.schedule, '17h00 : Deukeundo vs Top Jeunesse'),
           infoRow(Icons.confirmation_number, 'Entrée : 1000 F'),
-          MatchCountdown(dateMatch: DateTime(2026, 10, 12, 18, 0)),
+          MatchCountdown(dateMatch: DateTime(2026, 10, 12, 15, 30)),
         ],
       ),
     );
 
     return Column(
       children: [
+        // CADETS (15h30 puis 17h00)
+        buildImageWithLogos('assets/images/demi_finale_cadet_1.jpg', 'assets/images/logo_md.png', null, ax: 0.70, ay: -0.40, size: 48),
+        const SizedBox(height: 15),
+        buildImageWithLogos('assets/images/demi_finale_cadet_2.jpg', null, 'assets/images/logo_tj.png', ax: 0.70, ay: -0.37, size: 48),
+        const SizedBox(height: 15),
+        // SENIORS (18h00 puis 20h00)
         buildImageWithLogos('assets/images/demi_finale_1.png', 'assets/images/logo_tj.png', 'assets/images/logo_jk.png'),
         const SizedBox(height: 15),
         buildImageWithLogos('assets/images/demi_finale_2.png', 'assets/images/logo_se.png', 'assets/images/logo_md.png'),

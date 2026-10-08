@@ -362,10 +362,17 @@ class _ClassementTabState extends State<ClassementTab> with SingleTickerProvider
                             ),
                           ],
                         ),
+                        if (m['penalties_asc'] != null && m['penalties_adv'] != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            '(${m['penalties_asc']} TAB ${m['penalties_adv']})',
+                            style: TextStyle(color: Colors.orange[800], fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                         if (isLive) ...[
                           const SizedBox(height: 2),
                           Text(
-                            statut == 'MI_TEMPS' ? 'MI-TEMPS' : statut == 'DEUXIEME_MI_TEMPS' ? '2ème MT' : '1ère MT',
+                            statut == 'MI_TEMPS' ? 'MI-TEMPS' : statut == 'DEUXIEME_MI_TEMPS' ? '2ème MT' : statut == 'TIR_AU_BUT' ? 'TIRS AU BUT' : '1ère MT',
                             style: const TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                         ]

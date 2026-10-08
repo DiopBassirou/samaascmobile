@@ -15,6 +15,47 @@ class SuperAdminLiveScreen extends StatefulWidget {
 }
 
 class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
+  /// Pastilles de la séance de TAB : ✅ réussi (vert) / ❌ raté (rouge), dans l'ordre des tirs.
+  Widget _tabShotsRow(List<dynamic> events, String goalType, String missType) {
+    final shots = events.where((e) => e.type == goalType || e.type == missType).toList();
+    if (shots.isEmpty) {
+      return const Text('—', style: TextStyle(color: Colors.white38, fontSize: 14));
+    }
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 4,
+      runSpacing: 4,
+      children: shots.map<Widget>((e) {
+        final scored = e.type == goalType;
+        return Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: scored ? Colors.greenAccent.withValues(alpha: 0.25) : Colors.redAccent.withValues(alpha: 0.25),
+            shape: BoxShape.circle,
+            border: Border.all(color: scored ? Colors.greenAccent : Colors.redAccent, width: 1.5),
+          ),
+          child: Icon(scored ? Icons.check : Icons.close, size: 14, color: scored ? Colors.greenAccent : Colors.redAccent),
+        );
+      }).toList(),
+    );
+  }
+
+  void _tabFeedback(BuildContext context, bool scored, String teamName) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: const Duration(milliseconds: 1500),
+          backgroundColor: scored ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
+          content: Text(
+            scored ? '✅ Tir réussi : $teamName' : '❌ Tir raté : $teamName',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+  }
+
   void _showSuperAdminAddGoalDialog(BuildContext context, AuthProvider auth, MatchProvider matchProv, MatchGame match, bool isAsc) {
     final minuteController = TextEditingController(text: '');
     final manualNameController = TextEditingController(text: '');
@@ -266,6 +307,8 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                                             Text(updatedMatch.teamAName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                                             const SizedBox(height: 8),
                                             Text('${updatedMatch.penaltiesAsc ?? 0}', style: const TextStyle(color: Colors.greenAccent, fontSize: 42, fontWeight: FontWeight.w900)),
+                                            const SizedBox(height: 6),
+                                            _tabShotsRow(updatedMatch.events, 'TIR_AU_BUT_ASC', 'RATE_TAB_ASC'),
                                           ],
                                         ),
                                         const Text('TAB', style: TextStyle(color: Colors.white54, fontSize: 18, fontWeight: FontWeight.bold)),
@@ -275,6 +318,8 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                                             Text(updatedMatch.teamBName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                                             const SizedBox(height: 8),
                                             Text('${updatedMatch.penaltiesAdv ?? 0}', style: const TextStyle(color: Colors.redAccent, fontSize: 42, fontWeight: FontWeight.w900)),
+                                            const SizedBox(height: 6),
+                                            _tabShotsRow(updatedMatch.events, 'TIR_AU_BUT_ADV', 'RATE_TAB_ADV'),
                                           ],
                                         ),
                                       ],
@@ -296,6 +341,7 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                                             onPressed: () async {
                                               try {
                                                 await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'TIR_AU_BUT_ASC', description: 'Tir au but réussi');
+                                                if (context.mounted) _tabFeedback(context, true, updatedMatch.teamAName);
                                               } catch (e) {
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
@@ -318,6 +364,7 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                                             onPressed: () async {
                                               try {
                                                 await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'TIR_AU_BUT_ADV', description: 'Tir au but réussi');
+                                                if (context.mounted) _tabFeedback(context, true, updatedMatch.teamBName);
                                               } catch (e) {
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
@@ -344,6 +391,7 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                                             onPressed: () async {
                                               try {
                                                 await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'RATE_TAB_ASC', description: 'Tir au but raté');
+                                                if (context.mounted) _tabFeedback(context, false, updatedMatch.teamAName);
                                               } catch (e) {
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
@@ -366,6 +414,7 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                                             onPressed: () async {
                                               try {
                                                 await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'RATE_TAB_ADV', description: 'Tir au but raté');
+                                                if (context.mounted) _tabFeedback(context, false, updatedMatch.teamBName);
                                               } catch (e) {
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));

@@ -842,8 +842,8 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
         phase: _matchPhase,
         scoreA: _hasScore ? int.tryParse(_scoreAController.text) : null,
         scoreB: _hasScore ? int.tryParse(_scoreBController.text) : null,
-        penaltiesA: _hasPenalties ? int.tryParse(_penaltiesAController.text) : null,
-        penaltiesB: _hasPenalties ? int.tryParse(_penaltiesBController.text) : null,
+        penaltiesA: _hasPenalties ? (int.tryParse(_penaltiesAController.text) ?? 0) : null,
+        penaltiesB: _hasPenalties ? (int.tryParse(_penaltiesBController.text) ?? 0) : null,
       );
 
       if (!mounted) return;
@@ -1035,8 +1035,8 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                           'statut': matchStatut,
                           'score_asc': int.tryParse(scoreAController.text) ?? 0,
                           'score_adv': int.tryParse(scoreBController.text) ?? 0,
-                          'penalties_asc': int.tryParse(penaltiesAController.text),
-                          'penalties_adv': int.tryParse(penaltiesBController.text),
+                          'penalties_asc': (penaltiesAController.text.trim().isEmpty && penaltiesBController.text.trim().isEmpty) ? null : (int.tryParse(penaltiesAController.text) ?? 0),
+                          'penalties_adv': (penaltiesAController.text.trim().isEmpty && penaltiesBController.text.trim().isEmpty) ? null : (int.tryParse(penaltiesBController.text) ?? 0),
                         };
                         if (teamAId != null) data['poule_team_a_id'] = teamAId;
                         if (teamBId != null) data['poule_team_b_id'] = teamBId;
