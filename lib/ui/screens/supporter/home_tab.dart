@@ -64,11 +64,8 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
         final recentFinished = lastMatches.where((m) => m.isToday || m.isYesterday).toList();
 
         List<MatchGame> matchesToDisplay = [];
-        if (currentMatches.isNotEmpty) {
-          matchesToDisplay = currentMatches;
-        } else if (recentFinished.isNotEmpty || nextMatches.isNotEmpty) {
-          // À venir d'abord, puis terminés aujourd'hui / hier
-          matchesToDisplay = [...nextMatches, ...recentFinished];
+        if (currentMatches.isNotEmpty || recentFinished.isNotEmpty || nextMatches.isNotEmpty) {
+          matchesToDisplay = [...currentMatches, ...recentFinished, ...nextMatches];
         } else if (lastMatches.isNotEmpty) {
           matchesToDisplay = lastMatches.take(2).toList();
         }
@@ -91,7 +88,6 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSemiFinalsPromo(matchProvider),
               // Notification du dimanche
               if (DateTime.now().weekday == DateTime.sunday) ...[
                 Container(
@@ -146,40 +142,44 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                 const SizedBox(height: 20),
               ],
               if (matchesToDisplay.isNotEmpty) ...[
-                ...matchesToDisplay.map((match) => _buildMatchCard(match, authProvider)),
-              ],
-
-              // Fil du Match (Timeline d'événements - affiché uniquement pour le match en cours ou terminé il y a moins de 24h)
-              if (matchesToDisplay.isNotEmpty &&
-                  (matchesToDisplay.first.statut == 'EN_COURS' ||
-                   matchesToDisplay.first.statut == 'MI_TEMPS' ||
-                   matchesToDisplay.first.statut == 'DEUXIEME_MI_TEMPS' ||
-                   (matchesToDisplay.first.statut == 'TERMINE' && (matchesToDisplay.first.isToday || matchesToDisplay.first.isYesterday)))) ...[
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.timeline, color: Color(0xFF0A5C36), size: 20),
-                          const SizedBox(width: 8),
-                          const Text('Fil du Match', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                          const Spacer(),
-                          Text('${matchesToDisplay.first.events.length} événement(s)', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-                        ],
+                ...matchesToDisplay.expand((match) {
+                  final isLiveOrRecent = match.statut == 'EN_COURS' || 
+                                         match.statut == 'MI_TEMPS' || 
+                                         match.statut == 'DEUXIEME_MI_TEMPS' ||
+                                         match.statut == 'TIR_AU_BUT' || 
+                                         (match.statut == 'TERMINE' && (match.isToday || match.isYesterday));
+                  
+                  return [
+                    _buildMatchCard(match, authProvider),
+                    if (isLiveOrRecent) ...[
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.timeline, color: Color(0xFF0A5C36), size: 20),
+                                const SizedBox(width: 8),
+                                const Text('Fil du Match', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                                const Spacer(),
+                                Text('${match.events.length} événement(s)', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            _buildEventsTimeline(match, match.events),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      _buildEventsTimeline(matchesToDisplay.first, matchesToDisplay.first.events),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
+                      const SizedBox(height: 20),
+                    ]
+                  ];
+                }),
               ],
 
               // Homme du match
@@ -545,103 +545,6 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
     final dt = DateTime.tryParse(dateStr);
     if (dt == null) return '';
     return '${dt.hour.toString().padLeft(2, '0')}h${dt.minute.toString().padLeft(2, '0')}';
-  }
-
-  Widget _buildSemiFinalsPromo(MatchProvider matchProvider) {
-    // Si des matchs de demi-finale sont dǸj terminǸs dans le systme, on cache la promo
-    final hasFinishedDemi = matchProvider.matches.any((m) => 
-      (m.statut == 'TERMINE' || m.statut == 'EN_COURS') && 
-      (m.phase?.toUpperCase().contains('DEMI') ?? false)
-    );
-
-    if (hasFinishedDemi) {
-      return const SizedBox.shrink();
-    }
-
-    Widget buildImageWithLogos(String path, String? logo1Path, String? logo2Path, {double ax = 0.90, double ay = -0.55, double size = 70}) {
-      Widget logo(String? p, double x) {
-        if (p == null) return const SizedBox.shrink();
-        return Positioned.fill(
-          child: Align(
-            alignment: Alignment(x, ay),
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black87, blurRadius: 15, spreadRadius: 6)]),
-              child: ClipOval(
-                child: Image.asset(p, width: size, height: size, fit: BoxFit.cover),
-              ),
-            ),
-          ),
-        );
-      }
-
-      return Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.asset(path, width: double.infinity),
-          ),
-          logo(logo1Path, -ax),
-          logo(logo2Path, ax),
-        ],
-      );
-    }
-
-    // Placement précis d'un logo : fx / fy = centre en fraction de la largeur / hauteur de l'image, sf = diamètre en fraction de la largeur.
-    Widget buildSquareBannerWithLogos(String path, String logoLeft, String logoRight, {required double fx, required double fy, required double sf}) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: AspectRatio(
-          aspectRatio: 1,
-          child: LayoutBuilder(
-            builder: (context, c) {
-              final w = c.maxWidth;
-              final d = w * sf;
-              Widget logo(String p, double cx) {
-                return Positioned(
-                  left: cx * w - d / 2,
-                  top: fy * w - d / 2,
-                  width: d,
-                  height: d,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black,
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.85), width: 1.5),
-                      boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 10)],
-                    ),
-                    child: ClipOval(child: Image.asset(p, fit: BoxFit.cover)),
-                  ),
-                );
-              }
-
-              return Stack(
-                children: [
-                  Positioned.fill(child: Image.asset(path, fit: BoxFit.cover)),
-                  logo(logoLeft, fx),
-                  logo(logoRight, 1 - fx),
-                ],
-              );
-            },
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        // CADETS (15h30 puis 17h00)
-        buildSquareBannerWithLogos('assets/images/demi_finale_cadet_1.jpg', 'assets/images/logo_md.png', 'assets/images/logo_mx.png', fx: 0.154, fy: 0.30, sf: 0.125),
-        const SizedBox(height: 15),
-        buildSquareBannerWithLogos('assets/images/demi_finale_cadet_2.jpg', 'assets/images/logo_dk.png', 'assets/images/logo_tj.png', fx: 0.151, fy: 0.314, sf: 0.145),
-        const SizedBox(height: 15),
-        // SENIORS (18h00 puis 20h00)
-        buildImageWithLogos('assets/images/demi_finale_1.png', 'assets/images/logo_tj.png', 'assets/images/logo_jk.png'),
-        const SizedBox(height: 15),
-        buildImageWithLogos('assets/images/demi_finale_2.png', 'assets/images/logo_se.png', 'assets/images/logo_md.png'),
-        const SizedBox(height: 20),
-      ],
-    );
   }
 }
 
