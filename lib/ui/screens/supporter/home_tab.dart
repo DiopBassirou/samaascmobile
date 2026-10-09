@@ -67,7 +67,8 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
         if (currentMatches.isNotEmpty) {
           matchesToDisplay = currentMatches;
         } else if (recentFinished.isNotEmpty || nextMatches.isNotEmpty) {
-          matchesToDisplay = [...recentFinished, ...nextMatches];
+          // À venir d'abord, puis terminés aujourd'hui / hier
+          matchesToDisplay = [...nextMatches, ...recentFinished];
         } else if (lastMatches.isNotEmpty) {
           matchesToDisplay = lastMatches.take(2).toList();
         }
@@ -485,11 +486,12 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: Text("${e.minute}'", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: iconColor)),
-              ),
+              if (e.type != 'TIR_AU_BUT_ASC' && e.type != 'TIR_AU_BUT_ADV' && e.type != 'RATE_TAB_ASC' && e.type != 'RATE_TAB_ADV')
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                  child: Text("${e.minute}'", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: iconColor)),
+                ),
             ],
           ),
         );
@@ -585,61 +587,58 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
       );
     }
 
-    Widget infoRow(IconData icon, String text) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Icon(icon, color: const Color(0xFFFFC107), size: 20),
-            const SizedBox(width: 10),
-            Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14))),
-          ],
+    // Placement précis d'un logo : fx / fy = centre en fraction de la largeur / hauteur de l'image, sf = diamètre en fraction de la largeur.
+    Widget buildSquareBannerWithLogos(String path, String logoLeft, String logoRight, {required double fx, required double fy, required double sf}) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: LayoutBuilder(
+            builder: (context, c) {
+              final w = c.maxWidth;
+              final d = w * sf;
+              Widget logo(String p, double cx) {
+                return Positioned(
+                  left: cx * w - d / 2,
+                  top: fy * w - d / 2,
+                  width: d,
+                  height: d,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black,
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.85), width: 1.5),
+                      boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 10)],
+                    ),
+                    child: ClipOval(child: Image.asset(p, fit: BoxFit.cover)),
+                  ),
+                );
+              }
+
+              return Stack(
+                children: [
+                  Positioned.fill(child: Image.asset(path, fit: BoxFit.cover)),
+                  logo(logoLeft, fx),
+                  logo(logoRight, 1 - fx),
+                ],
+              );
+            },
+          ),
         ),
       );
     }
 
-    final scheduleCard = Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF0D1B3E), Color(0xFF1A2A5E)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFFC107).withValues(alpha: 0.6)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Center(
-            child: Text('ZONE 2A • DEMI-FINALES', style: TextStyle(color: Color(0xFFFFC107), fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1)),
-          ),
-          const SizedBox(height: 10),
-          infoRow(Icons.calendar_month, 'Lundi 12 Octobre 2026'),
-          infoRow(Icons.stadium, 'Stade Caroline Faye'),
-          infoRow(Icons.sports, 'SENIORS'),
-          infoRow(Icons.schedule, '18h00 : Jokko vs Top Jeunesse'),
-          infoRow(Icons.schedule, '20h00 : Médine vs Super Étoile'),
-          infoRow(Icons.sports, 'CADETS (même jour)'),
-          infoRow(Icons.schedule, '15h30 : Médine vs Médine Extension'),
-          infoRow(Icons.schedule, '17h00 : Deukeundo vs Top Jeunesse'),
-          infoRow(Icons.confirmation_number, 'Entrée : 1000 F'),
-          MatchCountdown(dateMatch: DateTime(2026, 10, 12, 15, 30)),
-        ],
-      ),
-    );
-
     return Column(
       children: [
         // CADETS (15h30 puis 17h00)
-        buildImageWithLogos('assets/images/demi_finale_cadet_1.jpg', 'assets/images/logo_md.png', null, ax: 0.70, ay: -0.40, size: 48),
+        buildSquareBannerWithLogos('assets/images/demi_finale_cadet_1.jpg', 'assets/images/logo_md.png', 'assets/images/logo_mx.png', fx: 0.154, fy: 0.30, sf: 0.125),
         const SizedBox(height: 15),
-        buildImageWithLogos('assets/images/demi_finale_cadet_2.jpg', null, 'assets/images/logo_tj.png', ax: 0.70, ay: -0.37, size: 48),
+        buildSquareBannerWithLogos('assets/images/demi_finale_cadet_2.jpg', 'assets/images/logo_dk.png', 'assets/images/logo_tj.png', fx: 0.151, fy: 0.314, sf: 0.145),
         const SizedBox(height: 15),
         // SENIORS (18h00 puis 20h00)
         buildImageWithLogos('assets/images/demi_finale_1.png', 'assets/images/logo_tj.png', 'assets/images/logo_jk.png'),
         const SizedBox(height: 15),
         buildImageWithLogos('assets/images/demi_finale_2.png', 'assets/images/logo_se.png', 'assets/images/logo_md.png'),
-        const SizedBox(height: 15),
-        scheduleCard,
         const SizedBox(height: 20),
       ],
     );
