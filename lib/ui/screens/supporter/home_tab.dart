@@ -427,21 +427,21 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
           title = '⚽ But ${match.teamBName}${e.playerName != null ? " : ${e.playerName}" : ""}';
           iconColor = const Color(0xFFC62828);
         } else if (e.type == 'TIR_AU_BUT_ASC') {
-          title = '🎯 Tir au but : ${match.teamAName}${e.playerName != null ? " (${e.playerName})" : ""}';
+          title = '🎯 Marqué : ${match.teamAName}${e.playerName != null ? " (${e.playerName})" : ""}';
           icon = Icons.sports_score;
           iconColor = const Color(0xFF2E7D32);
         } else if (e.type == 'TIR_AU_BUT_ADV') {
-          title = '🎯 Tir au but : ${match.teamBName}${e.playerName != null ? " (${e.playerName})" : ""}';
+          title = '🎯 Marqué : ${match.teamBName}${e.playerName != null ? " (${e.playerName})" : ""}';
           icon = Icons.sports_score;
-          iconColor = const Color(0xFFC62828);
+          iconColor = const Color(0xFF2E7D32);
         } else if (e.type == 'RATE_TAB_ASC') {
           title = '❌ Raté : ${match.teamAName}${e.playerName != null ? " (${e.playerName})" : ""}';
           icon = Icons.close;
-          iconColor = Colors.grey[700]!;
+          iconColor = const Color(0xFFC62828);
         } else if (e.type == 'RATE_TAB_ADV') {
           title = '❌ Raté : ${match.teamBName}${e.playerName != null ? " (${e.playerName})" : ""}';
           icon = Icons.close;
-          iconColor = Colors.grey[700]!;
+          iconColor = const Color(0xFFC62828);
         } else if (e.type == 'MI_TEMPS') {
           title = '⏸️ Mi-Temps';
           icon = Icons.pause_circle_filled;
@@ -450,6 +450,13 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
           title = '🟨 Carton${e.playerName != null ? " : ${e.playerName}" : ""}';
           icon = Icons.square;
           iconColor = Colors.amber;
+        }
+
+        String? desc = e.description;
+        if (e.type == 'TIR_AU_BUT_ASC' || e.type == 'TIR_AU_BUT_ADV') {
+          desc = (desc != null && desc.isNotEmpty) ? desc : 'Tir au but réussi';
+        } else if (e.type == 'RATE_TAB_ASC' || e.type == 'RATE_TAB_ADV') {
+          desc = (desc != null && desc.isNotEmpty) ? desc : 'Tir au but raté';
         }
 
         return Container(
@@ -473,8 +480,8 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    if (e.description != null && e.description!.isNotEmpty && e.type != 'BUT_ASC' && e.type != 'BUT_ADV')
-                      Text(e.description!, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                    if (desc != null && desc.isNotEmpty && e.type != 'BUT_ASC' && e.type != 'BUT_ADV')
+                      Text(desc, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
                   ],
                 ),
               ),
