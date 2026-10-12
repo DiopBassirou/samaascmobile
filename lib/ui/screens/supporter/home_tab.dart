@@ -9,7 +9,6 @@ import '../../../ui/widgets/match_timer.dart';
 import '../../widgets/team_logo.dart';
 
 import '../../../services/device_service.dart';
-import '../../widgets/match_poll.dart';
 
 class SupporterHomeTab extends StatefulWidget {
   const SupporterHomeTab({super.key});
@@ -387,13 +386,6 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                 if (isNext) ...[
                   if (match.dateMatch != null) 
                     MatchCountdown(dateMatch: DateTime.parse(match.dateMatch)),
-                  MatchPoll(
-                    matchId: match.id,
-                    teamAName: match.teamAName, 
-                    teamBName: match.teamBName,
-                    teamALogo: match.teamALogo,
-                    teamBLogo: match.teamBLogo,
-                  ),
                 ],
               ],
             ),

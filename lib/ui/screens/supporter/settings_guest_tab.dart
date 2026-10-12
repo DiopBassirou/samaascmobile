@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../../providers/auth_provider.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../services/device_service.dart';
@@ -16,6 +18,7 @@ class _SettingsGuestTabState extends State<SettingsGuestTab> {
   bool _showLoginForm = false;
   bool _showRegisterForm = false;
   bool _isLoading = false;
+  String _appVersion = '1.1.9';
 
   final _loginEmailController = TextEditingController();
   final _loginPasswordController = TextEditingController();
@@ -30,6 +33,7 @@ class _SettingsGuestTabState extends State<SettingsGuestTab> {
   void initState() {
     super.initState();
     _loadFavoriteAsc();
+    _loadAppVersion();
   }
 
   @override
@@ -48,6 +52,18 @@ class _SettingsGuestTabState extends State<SettingsGuestTab> {
   Future<void> _loadFavoriteAsc() async {
     final fav = await DeviceService().getFavoriteAsc();
     if (mounted) setState(() => _favoriteAsc = fav);
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final res = await http.get(Uri.parse('version.json?t=${DateTime.now().millisecondsSinceEpoch}'));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['version'] != null && mounted) {
+          setState(() => _appVersion = data['version']);
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _handleLogin() async {
@@ -273,7 +289,7 @@ class _SettingsGuestTabState extends State<SettingsGuestTab> {
               children: [
                 _buildInfoRow('Application', 'SAMA ASC'),
                 const Divider(height: 20),
-                _buildInfoRow('Version', '1.0.0'),
+                _buildInfoRow('Version', _appVersion),
                 const Divider(height: 20),
                 _buildInfoRow('Ville', 'Mbour, Sénégal'),
                 const Divider(height: 20),
