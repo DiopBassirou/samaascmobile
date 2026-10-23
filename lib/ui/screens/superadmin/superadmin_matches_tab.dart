@@ -19,8 +19,8 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
 
   String _categorie = 'SENIOR';
   int? _selectedPouleIndex;
-  int? _teamAId;
-  int? _teamBId;
+  String? _teamAKey;
+  String? _teamBKey;
 
   DateTime _matchDate = DateTime.now();
   TimeOfDay _matchTime = const TimeOfDay(hour: 16, minute: 0);
@@ -56,7 +56,9 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
 
   bool _isSubmitting = false;
   bool _isLoadingMatches = false;
+  bool _isLoadingAscs = false;
   List<Map<String, dynamic>> _allMatches = [];
+  List<Map<String, dynamic>> _allAscs = [];
   String _matchStatusFilter = 'A_VENIR'; // 'A_VENIR' ou 'TERMINE'
 
   @override
@@ -67,7 +69,19 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
       final pouleProv = Provider.of<PouleProvider>(context, listen: false);
       pouleProv.fetchPoules(auth);
     });
+    _loadAscs();
     _fetchMatches();
+  }
+
+  Future<void> _loadAscs() async {
+    setState(() => _isLoadingAscs = true);
+    try {
+      final ascs = await _ascService.getSuperAdminAscs();
+      if (mounted) setState(() => _allAscs = ascs);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _isLoadingAscs = false);
+    }
   }
 
   Future<void> _fetchMatches() async {
@@ -84,11 +98,76 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     }
   }
 
+  List<Map<String, dynamic>> _getSelectableTeams(List<Map<String, dynamic>> filteredPoules) {
+    final List<Map<String, dynamic>> teams = [];
+    final Set<String> addedKeys = {};
+
+    // 1. Ajouter toutes les ASCs enregistrées sur la plateforme (y compris les nouvelles créées)
+    for (var asc in _allAscs) {
+      final code = asc['code_unique']?.toString() ?? '';
+      if (code.isNotEmpty) {
+        final key = 'asc:$code';
+        addedKeys.add(key);
+
+        String subtitle = asc['zone'] != null ? 'Zone: ${asc['zone']}' : '';
+        int? pouleTeamId;
+        for (var p in filteredPoules) {
+          if (p['teams'] != null) {
+            for (var t in p['teams']) {
+              if (t['asc_code'] == code) {
+                pouleTeamId = t['id'];
+                final zoneText = asc['zone'] != null ? ' • ${asc['zone']}' : '';
+                subtitle = '${p['nom']}$zoneText';
+                break;
+              }
+            }
+          }
+          if (pouleTeamId != null) break;
+        }
+
+        teams.add({
+          'key': key,
+          'asc_code': code,
+          'poule_team_id': pouleTeamId,
+          'nom': asc['nom'] ?? 'ASC Sans nom',
+          'subtitle': subtitle,
+          'logo': asc['logo_url'],
+        });
+      }
+    }
+
+    // 2. Ajouter les équipes de poules qui n'étaient pas dans _allAscs
+    for (var p in filteredPoules) {
+      if (p['teams'] != null) {
+        for (var t in p['teams']) {
+          final ascCode = t['asc_code']?.toString();
+          final id = t['id'];
+          final key = ascCode != null && ascCode.isNotEmpty ? 'asc:$ascCode' : 'poule:$id';
+          if (!addedKeys.contains(key)) {
+            addedKeys.add(key);
+            teams.add({
+              'key': key,
+              'asc_code': ascCode,
+              'poule_team_id': id,
+              'nom': t['nom_equipe'] ?? 'Équipe',
+              'subtitle': '${p['nom']}',
+              'logo': t['logo'],
+            });
+          }
+        }
+      }
+    }
+
+    teams.sort((a, b) => (a['nom'] as String).toLowerCase().compareTo((b['nom'] as String).toLowerCase()));
+    return teams;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<PouleProvider>(
       builder: (context, pouleProv, _) {
         final filteredPoules = pouleProv.poules.where((p) => p['categorie'] == _categorie).toList();
+        final selectableTeams = _getSelectableTeams(filteredPoules.cast<Map<String, dynamic>>());
         
         final displayedMatches = _allMatches.where((m) {
           final isSameCategory = m['categorie'] == _categorie;
@@ -106,54 +185,77 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
         }).toList();
 
         return Scaffold(
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Titre
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF0A5C36), Color(0xFF0F8A4B)]),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.sports_soccer, color: Colors.white, size: 28),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Création Rapide de Matchs', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 4),
-                            Text('Programmez ou enregistrez les résultats', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                          ],
+          body: RefreshIndicator(
+            onRefresh: () async {
+              final auth = Provider.of<AuthProvider>(context, listen: false);
+              await Future.wait([
+                pouleProv.fetchPoules(auth),
+                _loadAscs(),
+                _fetchMatches(),
+              ]);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Titre
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFF0A5C36), Color(0xFF0F8A4B)]),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.sports_soccer, color: Colors.white, size: 28),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text('Création Rapide de Matchs', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                              SizedBox(height: 4),
+                              Text('Programmez ou enregistrez les résultats', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                            ],
+                          ),
                         ),
-                      ),
+                        IconButton(
+                          icon: const Icon(Icons.refresh, color: Colors.white),
+                          tooltip: 'Actualiser les équipes',
+                          onPressed: () {
+                            final auth = Provider.of<AuthProvider>(context, listen: false);
+                            pouleProv.fetchPoules(auth);
+                            _loadAscs();
+                            _fetchMatches();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Données actualisées'), duration: Duration(seconds: 1)),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ─── CATÉGORIE ───
+                  _sectionTitle('Catégorie'),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _buildCatBtn('SENIOR', '🧑 Seniors', const Color(0xFF0A5C36)),
+                      const SizedBox(width: 10),
+                      _buildCatBtn('CADET', '🏃 Cadets', const Color(0xFF0F8A4B)),
                     ],
                   ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
-                // ─── CATÉGORIE ───
-                _sectionTitle('Catégorie'),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _buildCatBtn('SENIOR', '🧑 Seniors', const Color(0xFF0A5C36)),
-                    const SizedBox(width: 10),
-                    _buildCatBtn('CADET', '🏃 Cadets', const Color(0xFF0F8A4B)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // ─── ÉQUIPES ───
-                if (filteredPoules.isEmpty)
-                  _emptyBox('Aucune poule $_categorie disponible')
-                else ...[
-                  ..._buildTeamSelectors(filteredPoules.cast<Map<String, dynamic>>()),
+                  // ─── ÉQUIPES ───
+                  if (selectableTeams.isEmpty)
+                    _emptyBox('Aucune équipe ou ASC disponible')
+                  else ...[
+                    ..._buildTeamSelectors(selectableTeams),
 
                   // ─── DATE & HEURE ───
                   _sectionTitle('Date & Heure'),
@@ -421,12 +523,12 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     final isReporte = statut == 'REPORTE';
 
     // Noms des équipes
-    final String homeTeam = match['asc']?['nom'] ?? match['asc_code'] ?? '?';
-    final String awayTeam = match['opponent']?['nom_equipe'] ?? match['opponent']?['asc']?['nom'] ?? '?';
+    final String homeTeam = match['team_a_name'] ?? match['asc']?['nom'] ?? match['asc_code'] ?? '?';
+    final String awayTeam = match['team_b_name'] ?? match['opponent']?['nom_equipe'] ?? match['opponent']?['asc']?['nom'] ?? match['adversaire_nom'] ?? '?';
     
     // Logos
-    final String? homeLogo = match['asc']?['logo_url'];
-    final String? awayLogo = match['opponent']?['logo'] ?? match['opponent']?['asc']?['logo_url'];
+    final String? homeLogo = match['team_a_logo'] ?? match['asc']?['logo_url'];
+    final String? awayLogo = match['team_b_logo'] ?? match['opponent']?['logo'] ?? match['opponent']?['asc']?['logo_url'];
 
     // Date
     String dateLabel = '';
@@ -863,11 +965,34 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
   }
 
   Future<void> _submitMatch() async {
-    if (_teamAId == null || _teamBId == null) {
+    if (_teamAKey == null || _teamBKey == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Veuillez sélectionner les 2 équipes'), backgroundColor: Colors.red),
       );
       return;
+    }
+
+    if (_teamAKey == _teamBKey) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Les 2 équipes doivent être différentes'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    int? pouleTeamAId;
+    String? ascCodeA;
+    if (_teamAKey!.startsWith('asc:')) {
+      ascCodeA = _teamAKey!.substring(4);
+    } else if (_teamAKey!.startsWith('poule:')) {
+      pouleTeamAId = int.tryParse(_teamAKey!.substring(6));
+    }
+
+    int? pouleTeamBId;
+    String? ascCodeB;
+    if (_teamBKey!.startsWith('asc:')) {
+      ascCodeB = _teamBKey!.substring(4);
+    } else if (_teamBKey!.startsWith('poule:')) {
+      pouleTeamBId = int.tryParse(_teamBKey!.substring(6));
     }
 
     setState(() => _isSubmitting = true);
@@ -879,8 +1004,10 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
 
     try {
       final result = await _ascService.createSuperAdminMatch(
-        pouleTeamAId: _teamAId!,
-        pouleTeamBId: _teamBId!,
+        pouleTeamAId: pouleTeamAId,
+        pouleTeamBId: pouleTeamBId,
+        ascCodeA: ascCodeA,
+        ascCodeB: ascCodeB,
         dateMatch: dateTime.toIso8601String(),
         categorie: _categorie,
         lieu: _lieuController.text.trim().isEmpty ? null : _lieuController.text.trim(),
@@ -904,8 +1031,8 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
       _fetchMatches(); // Rafraîchir la liste après création
 
       setState(() {
-        _teamAId = null;
-        _teamBId = null;
+        _teamAKey = null;
+        _teamBKey = null;
         _scoreAController.text = '0';
         _scoreBController.text = '0';
         _hasScore = false;
@@ -943,22 +1070,25 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     // Recuperer toutes les equipes de la meme categorie
     final pouleProv = Provider.of<PouleProvider>(context, listen: false);
     final categoryPoules = pouleProv.poules.where((p) => p['categorie'] == match['categorie']).toList();
-    List<Map<String, dynamic>> allTeams = [];
-    for (var p in categoryPoules) {
-      if (p['teams'] != null) {
-        for (var t in p['teams']) {
-          allTeams.add({...t as Map<String, dynamic>, 'poule_nom': p['nom']});
-        }
-      }
+    final allTeams = _getSelectableTeams(categoryPoules.cast<Map<String, dynamic>>());
+    
+    String? teamAKey;
+    String? teamBKey;
+
+    if (match['asc_code'] != null) {
+      teamAKey = 'asc:${match['asc_code']}';
     }
-    
-    int? teamAId;
-    int? teamBId = match['opponent']?['id'];
-    
-    try {
-      teamAId = allTeams.firstWhere((t) => t['asc_code'] == match['asc_code'])['id'];
-    } catch (e) {
-      // Team A non trouvee dans la liste (peut-etre pas dans la meme categorie ou pas enregistree)
+    if (match['adversaire_code'] != null) {
+      teamBKey = 'asc:${match['adversaire_code']}';
+    } else if (match['opponent']?['id'] != null) {
+      teamBKey = 'poule:${match['opponent']['id']}';
+    }
+
+    if (teamAKey != null && !allTeams.any((t) => t['key'] == teamAKey)) {
+      teamAKey = null;
+    }
+    if (teamBKey != null && !allTeams.any((t) => t['key'] == teamBKey)) {
+      teamBKey = null;
     }
 
     showDialog(
@@ -972,24 +1102,32 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
               children: [
                 // Equipes
                 if (allTeams.isNotEmpty) ...[
-                  DropdownButtonFormField<int>(
-                    initialValue: teamAId,
+                  DropdownButtonFormField<String>(
+                    value: teamAKey,
                     decoration: InputDecoration(labelText: 'Équipe A', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
-                    items: allTeams.map((t) => DropdownMenuItem<int>(
-                      value: t['id'] as int,
-                      child: Text(t['nom_equipe'] ?? '', overflow: TextOverflow.ellipsis),
-                    )).toList(),
-                    onChanged: (val) => setStateDialog(() => teamAId = val),
+                    items: allTeams.map((t) {
+                      final subtitle = t['subtitle']?.toString() ?? '';
+                      final label = subtitle.isNotEmpty ? '${t['nom']} ($subtitle)' : '${t['nom']}';
+                      return DropdownMenuItem<String>(
+                        value: t['key'] as String,
+                        child: Text(label, overflow: TextOverflow.ellipsis),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setStateDialog(() => teamAKey = val),
                   ),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<int>(
-                    initialValue: teamBId,
+                  DropdownButtonFormField<String>(
+                    value: teamBKey,
                     decoration: InputDecoration(labelText: 'Équipe B', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
-                    items: allTeams.where((t) => t['id'] != teamAId).map((t) => DropdownMenuItem<int>(
-                      value: t['id'] as int,
-                      child: Text(t['nom_equipe'] ?? '', overflow: TextOverflow.ellipsis),
-                    )).toList(),
-                    onChanged: (val) => setStateDialog(() => teamBId = val),
+                    items: allTeams.where((t) => t['key'] != teamAKey).map((t) {
+                      final subtitle = t['subtitle']?.toString() ?? '';
+                      final label = subtitle.isNotEmpty ? '${t['nom']} ($subtitle)' : '${t['nom']}';
+                      return DropdownMenuItem<String>(
+                        value: t['key'] as String,
+                        child: Text(label, overflow: TextOverflow.ellipsis),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setStateDialog(() => teamBKey = val),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -1094,8 +1232,20 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                           'penalties_asc': (penaltiesAController.text.trim().isEmpty && penaltiesBController.text.trim().isEmpty) ? null : (int.tryParse(penaltiesAController.text) ?? 0),
                           'penalties_adv': (penaltiesAController.text.trim().isEmpty && penaltiesBController.text.trim().isEmpty) ? null : (int.tryParse(penaltiesBController.text) ?? 0),
                         };
-                        if (teamAId != null) data['poule_team_a_id'] = teamAId;
-                        if (teamBId != null) data['poule_team_b_id'] = teamBId;
+                        if (teamAKey != null) {
+                          if (teamAKey!.startsWith('asc:')) {
+                            data['asc_code_a'] = teamAKey!.substring(4);
+                          } else if (teamAKey!.startsWith('poule:')) {
+                            data['poule_team_a_id'] = int.tryParse(teamAKey!.substring(6));
+                          }
+                        }
+                        if (teamBKey != null) {
+                          if (teamBKey!.startsWith('asc:')) {
+                            data['asc_code_b'] = teamBKey!.substring(4);
+                          } else if (teamBKey!.startsWith('poule:')) {
+                            data['poule_team_b_id'] = int.tryParse(teamBKey!.substring(6));
+                          }
+                        }
                         
                         await _ascService.updateSuperAdminMatch(match['id'], data);
                         if (!mounted) return;
@@ -1116,42 +1266,46 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     );
   }
 
-  List<Widget> _buildTeamSelectors(List<Map<String, dynamic>> filteredPoules) {
-    List<Map<String, dynamic>> allTeams = [];
-    for (var p in filteredPoules) {
-      if (p['teams'] != null) {
-        for (var t in p['teams']) {
-          allTeams.add({...t as Map<String, dynamic>, 'poule_nom': p['nom']});
-        }
-      }
-    }
-
+  List<Widget> _buildTeamSelectors(List<Map<String, dynamic>> selectableTeams) {
     return [
       const SizedBox(height: 16),
       _sectionTitle('Équipe A'),
       const SizedBox(height: 8),
-      _buildDropdown<int>(
-        value: _teamAId,
+      _buildDropdown<String>(
+        value: _teamAKey,
         hint: 'Sélectionner l\'équipe A',
         icon: Icons.shield,
-        items: allTeams.map<DropdownMenuItem<int>>((t) {
-          return DropdownMenuItem(value: t['id'] as int, child: Text('${t['nom_equipe']} (${t['poule_nom']})', style: const TextStyle(fontWeight: FontWeight.w600)));
+        items: selectableTeams.map<DropdownMenuItem<String>>((t) {
+          final subtitle = t['subtitle']?.toString() ?? '';
+          final label = subtitle.isNotEmpty ? '${t['nom']} ($subtitle)' : '${t['nom']}';
+          return DropdownMenuItem(
+            value: t['key'] as String,
+            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+          );
         }).toList(),
-        onChanged: (val) => setState(() => _teamAId = val),
+        onChanged: (val) => setState(() {
+          _teamAKey = val;
+          if (_teamBKey == val) _teamBKey = null;
+        }),
       ),
       const SizedBox(height: 12),
       const Center(child: Text('⚔️ VS', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0A5C36)))),
       const SizedBox(height: 12),
       _sectionTitle('Équipe B'),
       const SizedBox(height: 8),
-      _buildDropdown<int>(
-        value: _teamBId,
+      _buildDropdown<String>(
+        value: _teamBKey,
         hint: 'Sélectionner l\'équipe B',
         icon: Icons.shield_outlined,
-        items: allTeams.where((t) => (t['id'] as int) != _teamAId).map<DropdownMenuItem<int>>((t) {
-          return DropdownMenuItem(value: t['id'] as int, child: Text('${t['nom_equipe']} (${t['poule_nom']})', style: const TextStyle(fontWeight: FontWeight.w600)));
+        items: selectableTeams.where((t) => (t['key'] as String) != _teamAKey).map<DropdownMenuItem<String>>((t) {
+          final subtitle = t['subtitle']?.toString() ?? '';
+          final label = subtitle.isNotEmpty ? '${t['nom']} ($subtitle)' : '${t['nom']}';
+          return DropdownMenuItem(
+            value: t['key'] as String,
+            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+          );
         }).toList(),
-        onChanged: (val) => setState(() => _teamBId = val),
+        onChanged: (val) => setState(() => _teamBKey = val),
       ),
       const SizedBox(height: 16),
     ];
@@ -1168,8 +1322,8 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
             setState(() {
               _categorie = cat;
               _selectedPouleIndex = null;
-              _teamAId = null;
-              _teamBId = null;
+              _teamAKey = null;
+              _teamBKey = null;
             });
           }
         },

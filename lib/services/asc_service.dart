@@ -211,8 +211,10 @@ class AscService {
   /// Créer un match en tant que Super Admin
   /// Si score_a et score_b sont fournis, le match est créé directement comme TERMINE
   Future<Map<String, dynamic>> createSuperAdminMatch({
-    required int pouleTeamAId,
-    required int pouleTeamBId,
+    int? pouleTeamAId,
+    int? pouleTeamBId,
+    String? ascCodeA,
+    String? ascCodeB,
     required String dateMatch,
     required String categorie,
     String? lieu,
@@ -225,14 +227,16 @@ class AscService {
   }) async {
     final token = await _getToken();
     final body = <String, dynamic>{
-      'poule_team_a_id': pouleTeamAId,
-      'poule_team_b_id': pouleTeamBId,
       'date_match': dateMatch,
       'categorie': categorie,
       'lieu': lieu,
       'phase': phase ?? 'Phase de Groupes',
       'type_coupe': typeCoupe ?? 'Coupe Zonale',
     };
+    if (pouleTeamAId != null) body['poule_team_a_id'] = pouleTeamAId;
+    if (pouleTeamBId != null) body['poule_team_b_id'] = pouleTeamBId;
+    if (ascCodeA != null) body['asc_code_a'] = ascCodeA;
+    if (ascCodeB != null) body['asc_code_b'] = ascCodeB;
     if (scoreA != null && scoreB != null) {
       body['score_a'] = scoreA;
       body['score_b'] = scoreB;
