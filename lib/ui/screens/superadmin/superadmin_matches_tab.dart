@@ -26,7 +26,24 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
   TimeOfDay _matchTime = const TimeOfDay(hour: 16, minute: 0);
   final _lieuController = TextEditingController();
   String _matchPhase = 'Phase de Groupes';
-  static const _phases = ['Phase de Groupes', '1/4 Finale', '1/2 Finale', 'Finale', 'Match Amical'];
+  static const _phases = [
+    'Phase de Groupes',
+    '1/32 Finale',
+    '1/16 Finale',
+    '1/8 Finale',
+    '1/4 Finale',
+    '1/2 Finale',
+    'Finale',
+    'Match Amical',
+  ];
+
+  String _selectedCoupeType = 'Coupe Zonale';
+  static const _coupeTypes = [
+    'Coupe Zonale',
+    'Coupe Communale',
+    'Coupe Départementale',
+    'Coupe Régionale',
+  ];
 
   // Score direct (optionnel)
   bool _hasScore = false;
@@ -196,6 +213,18 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                     icon: Icons.workspaces_outline,
                     items: _phases.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
                     onChanged: (val) => setState(() => _matchPhase = val ?? 'Phase de Groupes'),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ─── TYPE DE COUPE ───
+                  _sectionTitle('Type de Coupe'),
+                  const SizedBox(height: 8),
+                  _buildDropdown<String>(
+                    value: _selectedCoupeType,
+                    hint: 'Type de Coupe',
+                    icon: Icons.emoji_events_outlined,
+                    items: _coupeTypes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                    onChanged: (val) => setState(() => _selectedCoupeType = val ?? 'Coupe Zonale'),
                   ),
                   const SizedBox(height: 16),
 
@@ -476,6 +505,22 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                     ),
                     child: Text(match['phase'], style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey[700])),
                   ),
+                // Type de Coupe
+                if (match['type_coupe'] != null) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0A5C36).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF0A5C36).withValues(alpha: 0.2)),
+                    ),
+                    child: Text(
+                      match['type_coupe'],
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0A5C36)),
+                    ),
+                  ),
+                ],
                 const Spacer(),
                 // Date + Heure
                 if (dateLabel.isNotEmpty)
@@ -840,6 +885,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
         categorie: _categorie,
         lieu: _lieuController.text.trim().isEmpty ? null : _lieuController.text.trim(),
         phase: _matchPhase,
+        typeCoupe: _selectedCoupeType,
         scoreA: _hasScore ? int.tryParse(_scoreAController.text) : null,
         scoreB: _hasScore ? int.tryParse(_scoreBController.text) : null,
         penaltiesA: _hasPenalties ? (int.tryParse(_penaltiesAController.text) ?? 0) : null,
@@ -880,6 +926,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     
     final lieuController = TextEditingController(text: match['lieu'] ?? '');
     String matchPhase = match['phase'] ?? 'Phase de Groupes';
+    String matchCoupeType = _coupeTypes.contains(match['type_coupe']) ? match['type_coupe'] : 'Coupe Zonale';
     
     final scoreAController = TextEditingController(text: (match['score_asc'] ?? 0).toString());
     final scoreBController = TextEditingController(text: (match['score_adv'] ?? 0).toString());
@@ -990,6 +1037,14 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                   onChanged: (val) => setStateDialog(() => matchPhase = val!),
                 ),
                 const SizedBox(height: 16),
+                // Type de Coupe
+                DropdownButtonFormField<String>(
+                  initialValue: matchCoupeType,
+                  decoration: InputDecoration(labelText: 'Type de Coupe', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                  items: _coupeTypes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                  onChanged: (val) => setStateDialog(() => matchCoupeType = val!),
+                ),
+                const SizedBox(height: 16),
                 // Statut
                 DropdownButtonFormField<String>(
                   initialValue: matchStatut,
@@ -1032,6 +1087,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                           'date_match': matchDate.toIso8601String(),
                           'lieu': lieuController.text,
                           'phase': matchPhase,
+                          'type_coupe': matchCoupeType,
                           'statut': matchStatut,
                           'score_asc': int.tryParse(scoreAController.text) ?? 0,
                           'score_adv': int.tryParse(scoreBController.text) ?? 0,

@@ -16,6 +16,7 @@ class _AscListTabState extends State<AscListTab> {
 
   final _nomController = TextEditingController();
   final _zoneController = TextEditingController();
+  final _villeController = TextEditingController(text: 'Dakar');
 
   @override
   void initState() {
@@ -35,93 +36,118 @@ class _AscListTabState extends State<AscListTab> {
         SnackBar(content: Text('Erreur: $e')),
       );
     } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _createAsc() async {
-    if (_nomController.text.isEmpty || _zoneController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez remplir tous les champs')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      await _ascService.createSuperAdminAsc(
-        _nomController.text.trim(),
-        _zoneController.text.trim(),
-      );
-      _nomController.clear();
-      _zoneController.clear();
-      if (!mounted) return;
-      Navigator.pop(context); // Close modal
-      await _loadAscs();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ASC créée avec succès')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _showCreateDialog() {
+    bool isModalLoading = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Nouvelle ASC', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _nomController,
-                decoration: const InputDecoration(
-                  labelText: 'Nom de l\'ASC',
-                  prefixIcon: Icon(Icons.shield),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _zoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Zone (ex: Zone 1)',
-                  prefixIcon: Icon(Icons.location_on),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _createAsc,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0A5C36),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Nouvelle ASC', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: _nomController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom de l\'ASC',
+                    prefixIcon: Icon(Icons.shield),
+                    border: OutlineInputBorder(),
                   ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Créer l\'équipe', style: TextStyle(color: Colors.white, fontSize: 16)),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _zoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Zone (ex: Zone 1)',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _villeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Ville (ex: Dakar)',
+                    prefixIcon: Icon(Icons.location_city),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: isModalLoading
+                        ? null
+                        : () async {
+                            final nom = _nomController.text.trim();
+                            final zone = _zoneController.text.trim();
+                            final ville = _villeController.text.trim().isEmpty ? 'Dakar' : _villeController.text.trim();
+
+                            if (nom.isEmpty || zone.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Veuillez remplir le nom et la zone')),
+                              );
+                              return;
+                            }
+
+                            setModalState(() => isModalLoading = true);
+                            try {
+                              await _ascService.createSuperAdminAsc(nom, zone, ville: ville);
+                              _nomController.clear();
+                              _zoneController.clear();
+                              _villeController.text = 'Dakar';
+                              if (!mounted) return;
+                              Navigator.pop(ctx);
+                              await _loadAscs();
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('ASC créée avec succès !'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } catch (e) {
+                              setModalState(() => isModalLoading = false);
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Erreur: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0A5C36),
+                    ),
+                    child: isModalLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text('Créer l\'équipe', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

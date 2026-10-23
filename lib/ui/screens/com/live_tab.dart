@@ -411,7 +411,26 @@ class _LiveTabState extends State<LiveTab> {
     
     final lieuController = TextEditingController(text: match.lieu ?? '');
     String matchPhase = match.phase ?? 'Phase de Groupes';
+    String matchCoupeType = match.typeCoupe ?? 'Coupe Zonale';
     
+    const phases = [
+      'Phase de Groupes',
+      '1/32 Finale',
+      '1/16 Finale',
+      '1/8 Finale',
+      '1/4 Finale',
+      '1/2 Finale',
+      'Finale',
+      'Match Amical',
+    ];
+
+    const coupeTypes = [
+      'Coupe Zonale',
+      'Coupe Communale',
+      'Coupe Départementale',
+      'Coupe Régionale',
+    ];
+
     // Statut modifiable pour Chargé de com
     const statuts = ['A_VENIR', 'REPORTE'];
     String matchStatut = statuts.contains(match.statut) ? match.statut : 'A_VENIR';
@@ -499,10 +518,18 @@ class _LiveTabState extends State<LiveTab> {
                 const SizedBox(height: 16),
                 // Phase
                 DropdownButtonFormField<String>(
-                  initialValue: ['Phase de Groupes', '1/4 Finale', '1/2 Finale', 'Finale', 'Match Amical'].contains(matchPhase) ? matchPhase : 'Phase de Groupes',
+                  initialValue: phases.contains(matchPhase) ? matchPhase : 'Phase de Groupes',
                   decoration: InputDecoration(labelText: 'Phase', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
-                  items: ['Phase de Groupes', '1/4 Finale', '1/2 Finale', 'Finale', 'Match Amical'].map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+                  items: phases.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
                   onChanged: (val) => setStateDialog(() => matchPhase = val!),
+                ),
+                const SizedBox(height: 16),
+                // Type de Coupe
+                DropdownButtonFormField<String>(
+                  initialValue: coupeTypes.contains(matchCoupeType) ? matchCoupeType : 'Coupe Zonale',
+                  decoration: InputDecoration(labelText: 'Type de Coupe', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                  items: coupeTypes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                  onChanged: (val) => setStateDialog(() => matchCoupeType = val!),
                 ),
                 const SizedBox(height: 16),
                 // Statut
@@ -528,6 +555,7 @@ class _LiveTabState extends State<LiveTab> {
                           'date_match': matchDate.toIso8601String(),
                           'lieu': lieuController.text,
                           'phase': matchPhase,
+                          'type_coupe': matchCoupeType,
                           'statut': matchStatut,
                         };
                         if (teamBId != null) data['poule_team_b_id'] = teamBId;
@@ -1050,10 +1078,27 @@ class _MatchSheetState extends State<_MatchSheet> {
 
   String _matchCategorie = 'SENIOR';
 
-  // Match : lieu et phase
+  // Match : lieu, phase et type de coupe
   final _lieuController = TextEditingController();
   String _matchPhase = 'Phase de Groupes';
-  static const _phases = ['Phase de Groupes', '1/4 Finale', '1/2 Finale', 'Finale', 'Match Amical'];
+  static const _phases = [
+    'Phase de Groupes',
+    '1/32 Finale',
+    '1/16 Finale',
+    '1/8 Finale',
+    '1/4 Finale',
+    '1/2 Finale',
+    'Finale',
+    'Match Amical',
+  ];
+
+  String _matchCoupeType = 'Coupe Zonale';
+  static const _coupeTypes = [
+    'Coupe Zonale',
+    'Coupe Communale',
+    'Coupe Départementale',
+    'Coupe Régionale',
+  ];
 
   @override
   void initState() {
@@ -1280,6 +1325,25 @@ class _MatchSheetState extends State<_MatchSheet> {
             ),
             const SizedBox(height: 20),
 
+            // Type de Coupe
+            const Text('Type de Coupe', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[300]!)),
+              child: DropdownButtonFormField<String>(
+                initialValue: _matchCoupeType,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.emoji_events_outlined, color: Color(0xFF0A5C36)),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                items: _coupeTypes.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontWeight: FontWeight.w600)))).toList(),
+                onChanged: (val) => setState(() => _matchCoupeType = val ?? 'Coupe Zonale'),
+              ),
+            ),
+            const SizedBox(height: 20),
+
             // Lieu du match
             const Text('Terrain / Lieu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
             const SizedBox(height: 8),
@@ -1405,6 +1469,7 @@ class _MatchSheetState extends State<_MatchSheet> {
                             categorie: _matchCategorie,
                             lieu: _lieuController.text.trim(),
                             phase: _matchPhase,
+                            typeCoupe: _matchCoupeType,
                           );
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(

@@ -48,10 +48,11 @@ class MatchGame {
   final DateTime? startedAt;
   final DateTime? secondHalfStartedAt;
 
-  // Nouveaux champs (Catégorie, Lieu, Phase, Poule)
+  // Nouveaux champs (Catégorie, Lieu, Phase, Poule, Type de Coupe)
   final String categorie;  // CADET ou SENIOR
   final String? lieu;      // Terrain / Stade
-  final String? phase;     // Phase de Groupes, 1/4 Finale...
+  final String? phase;     // Phase de Groupes, 1/32 Finale...
+  final String? typeCoupe; // Coupe Zonale, Coupe Communale, etc.
   final String? pouleName; // Nom de la poule (ex: Poule A)
   final int? opponentId;
   final Map<String, dynamic>? rawOpponent;
@@ -76,6 +77,7 @@ class MatchGame {
     this.categorie = 'SENIOR',
     this.lieu,
     this.phase,
+    this.typeCoupe,
     this.pouleName,
     this.opponentId,
     this.rawOpponent,
@@ -107,6 +109,7 @@ class MatchGame {
       categorie: json['categorie'] ?? 'SENIOR',
       lieu: json['lieu'],
       phase: json['phase'],
+      typeCoupe: json['type_coupe'],
       pouleName: json['opponent']?['poule']?['nom'] ?? json['phase'],
       opponentId: json['opponent']?['id'],
       rawOpponent: json['opponent'],
@@ -133,6 +136,7 @@ class MatchGame {
       categorie: json['categorie'] ?? 'SENIOR',
       lieu: json['lieu'],
       phase: json['poule'],
+      typeCoupe: json['type_coupe'],
       pouleName: json['poule'],
     );
   }

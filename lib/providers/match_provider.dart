@@ -107,6 +107,7 @@ class MatchProvider with ChangeNotifier {
     String categorie = 'SENIOR',
     String lieu = '',
     String phase = 'Phase de Groupes',
+    String typeCoupe = 'Coupe Zonale',
   }) async {
     final token = authProvider.token;
     if (token == null) return;
@@ -126,6 +127,7 @@ class MatchProvider with ChangeNotifier {
           'categorie': categorie,
           if (lieu.isNotEmpty) 'lieu': lieu,
           'phase': phase,
+          'type_coupe': typeCoupe,
         }),
       );
 

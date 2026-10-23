@@ -47,7 +47,7 @@ class AscService {
     }
   }
 
-  Future<Map<String, dynamic>> createSuperAdminAsc(String nom, String zone) async {
+  Future<Map<String, dynamic>> createSuperAdminAsc(String nom, String zone, {String ville = 'Dakar'}) async {
     final token = await _getToken();
     final response = await http.post(
       Uri.parse('$_baseUrl/superadmin/ascs'),
@@ -59,12 +59,19 @@ class AscService {
       body: jsonEncode({
         'nom': nom,
         'zone': zone,
+        'ville': ville,
       }),
-    );
+    ).timeout(const Duration(seconds: 15));
     if (response.statusCode == 201) {
       return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
-      throw Exception('Erreur lors de la création de l\'ASC');
+      try {
+        final err = jsonDecode(utf8.decode(response.bodyBytes));
+        throw Exception(err['message'] ?? 'Erreur lors de la création de l\'ASC');
+      } catch (e) {
+        if (e is Exception && !e.toString().contains('FormatException')) rethrow;
+        throw Exception('Erreur lors de la création de l\'ASC (${response.statusCode})');
+      }
     }
   }
 
@@ -210,6 +217,7 @@ class AscService {
     required String categorie,
     String? lieu,
     String? phase,
+    String? typeCoupe,
     int? scoreA,
     int? scoreB,
     int? penaltiesA,
@@ -223,6 +231,7 @@ class AscService {
       'categorie': categorie,
       'lieu': lieu,
       'phase': phase ?? 'Phase de Groupes',
+      'type_coupe': typeCoupe ?? 'Coupe Zonale',
     };
     if (scoreA != null && scoreB != null) {
       body['score_a'] = scoreA;
