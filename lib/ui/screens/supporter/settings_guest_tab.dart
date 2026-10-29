@@ -18,7 +18,7 @@ class _SettingsGuestTabState extends State<SettingsGuestTab> {
   bool _showLoginForm = false;
   bool _showRegisterForm = false;
   bool _isLoading = false;
-  String _appVersion = '1.1.9';
+  String _appVersion = '1.2.0';
 
   final _loginEmailController = TextEditingController();
   final _loginPasswordController = TextEditingController();
