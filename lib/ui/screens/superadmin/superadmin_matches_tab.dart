@@ -528,10 +528,11 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
               ],
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildMatchCard(Map<String, dynamic> match) {
     final statut = match['statut'] ?? 'A_VENIR';

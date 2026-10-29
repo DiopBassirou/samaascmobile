@@ -428,7 +428,7 @@ class _AscListTabState extends State<AscListTab> {
   }
 
   Future<void> _assignPresident(int userId, String codeUnique) async {
-    setState(() => _isLoading = true);
+    setState(() => _localLoading = true);
     try {
       final result = await _ascService.assignPresident(userId, codeUnique);
       if (!mounted) return;
