@@ -15,29 +15,46 @@ class SuperAdminLiveScreen extends StatefulWidget {
 }
 
 class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
-  /// Pastilles de la séance de TAB : ✅ réussi (vert) / ❌ raté (rouge), dans l'ordre des tirs.
+  /// Pastilles de la séance de TAB : ✅ réussi (vert) / ❌ raté (rouge), avec séparateur mort subite si >5 tirs.
   Widget _tabShotsRow(List<dynamic> events, String goalType, String missType) {
     final shots = events.where((e) => e.type == goalType || e.type == missType).toList();
     if (shots.isEmpty) {
       return const Text('—', style: TextStyle(color: Colors.white38, fontSize: 13));
     }
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 3,
-      runSpacing: 4,
-      children: shots.map<Widget>((e) {
-        final scored = e.type == goalType;
-        return Container(
-          width: 20,
-          height: 20,
+    final List<Widget> items = [];
+    for (int i = 0; i < shots.length; i++) {
+      if (i == 5) {
+        items.add(
+          Container(
+            width: 1.5,
+            height: 14,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            color: Colors.white38,
+          ),
+        );
+      }
+      final scored = shots[i].type == goalType;
+      items.add(
+        Container(
+          width: 18,
+          height: 18,
+          margin: const EdgeInsets.symmetric(horizontal: 1.5),
           decoration: BoxDecoration(
             color: scored ? Colors.greenAccent.withValues(alpha: 0.25) : Colors.redAccent.withValues(alpha: 0.25),
             shape: BoxShape.circle,
             border: Border.all(color: scored ? Colors.greenAccent : Colors.redAccent, width: 1.5),
           ),
-          child: Icon(scored ? Icons.check : Icons.close, size: 12, color: scored ? Colors.greenAccent : Colors.redAccent),
-        );
-      }).toList(),
+          child: Icon(scored ? Icons.check : Icons.close, size: 11, color: scored ? Colors.greenAccent : Colors.redAccent),
+        ),
+      );
+    }
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: items,
+      ),
     );
   }
 

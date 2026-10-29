@@ -256,6 +256,8 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
     final isLive = match.statut == 'EN_COURS' || match.statut == 'MI_TEMPS' || match.statut == 'DEUXIEME_MI_TEMPS' || match.statut == 'TIR_AU_BUT';
     final isNext = match.statut == 'A_VENIR' || match.statut == 'REPORTE';
     final isTabPhase = match.statut == 'TIR_AU_BUT' || match.penaltiesAsc != null || match.penaltiesAdv != null;
+    final shotsA = match.events.where((e) => e.type == 'TIR_AU_BUT_ASC' || e.type == 'RATE_TAB_ASC').toList();
+    final shotsB = match.events.where((e) => e.type == 'TIR_AU_BUT_ADV' || e.type == 'RATE_TAB_ADV').toList();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -344,7 +346,6 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                       match.teamAName,
                       Colors.greenAccent,
                       logoUrl: match.teamALogo,
-                      extra: isTabPhase ? _tabShotsRow(match.events, 'TIR_AU_BUT_ASC', 'RATE_TAB_ASC') : null,
                     ),
                     if (isNext)
                       const Text('VS', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold))
@@ -358,15 +359,21 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                       match.teamBName,
                       Colors.green,
                       logoUrl: match.teamBLogo,
-                      extra: isTabPhase ? _tabShotsRow(match.events, 'TIR_AU_BUT_ADV', 'RATE_TAB_ADV') : null,
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+
+                // Séance de tirs au but (tableau dédié horizontal, compact et élégant)
+                if (isTabPhase && (shotsA.isNotEmpty || shotsB.isNotEmpty)) ...[
+                  const SizedBox(height: 12),
+                  _buildShootoutBoard(match, shotsA, shotsB),
+                ],
 
                 // Chronomètre (seulement EN_COURS ou MI_TEMPS, masqué pendant les TAB)
-                if (isLive && match.statut != 'TIR_AU_BUT')
+                if (isLive && match.statut != 'TIR_AU_BUT') ...[
+                  const SizedBox(height: 12),
                   MatchTimer(match: match),
+                ],
 
                 const SizedBox(height: 12),
 
@@ -509,33 +516,229 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
     );
   }
 
-  Widget _tabShotsRow(List<dynamic> events, String goalType, String missType) {
-    final shots = events.where((e) => e.type == goalType || e.type == missType).toList();
-    if (shots.isEmpty) return const SizedBox.shrink();
-    return SizedBox(
-      width: 100,
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 3,
-        runSpacing: 3,
-        children: shots.map<Widget>((e) {
-          final scored = e.type == goalType;
-          return Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(
-              color: scored ? Colors.greenAccent.withValues(alpha: 0.3) : Colors.redAccent.withValues(alpha: 0.3),
-              shape: BoxShape.circle,
-              border: Border.all(color: scored ? Colors.greenAccent : Colors.redAccent, width: 1.2),
+  Widget _buildShootoutBoard(MatchGame match, List<dynamic> shotsA, List<dynamic> shotsB) {
+    final maxShots = shotsA.length > shotsB.length ? shotsA.length : shotsB.length;
+    final isSuddenDeath = maxShots > 5;
+    final scoreA = match.penaltiesAsc ?? shotsA.where((e) => e.type == 'TIR_AU_BUT_ASC').length;
+    final scoreB = match.penaltiesAdv ?? shotsB.where((e) => e.type == 'TIR_AU_BUT_ADV').length;
+    final aLeading = scoreA > scoreB;
+    final bLeading = scoreB > scoreA;
+
+    Widget buildPastille(bool scored) {
+      return Container(
+        width: 18,
+        height: 18,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          color: scored ? const Color(0xFF00E676).withValues(alpha: 0.3) : const Color(0xFFFF5252).withValues(alpha: 0.3),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: scored ? const Color(0xFF00E676) : const Color(0xFFFF5252),
+            width: 1.5,
+          ),
+        ),
+        child: Icon(
+          scored ? Icons.check : Icons.close,
+          size: 11,
+          color: scored ? const Color(0xFF00E676) : const Color(0xFFFF5252),
+        ),
+      );
+    }
+
+    Widget buildEmptySlot() {
+      return Container(
+        width: 18,
+        height: 18,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.22),
+            width: 1,
+          ),
+        ),
+      );
+    }
+
+    List<Widget> buildTeamSlots(List<dynamic> shots, String goalType) {
+      final List<Widget> slots = [];
+      final totalSlots = maxShots > 5 ? maxShots : 5;
+
+      for (int i = 0; i < totalSlots; i++) {
+        if (i == 5) {
+          slots.add(
+            Container(
+              width: 1.5,
+              height: 14,
+              margin: const EdgeInsets.symmetric(horizontal: 5),
+              color: Colors.white.withValues(alpha: 0.35),
             ),
-            child: Icon(scored ? Icons.check : Icons.close, size: 10, color: scored ? Colors.greenAccent : Colors.redAccent),
           );
-        }).toList(),
+        }
+
+        if (i < shots.length) {
+          final scored = shots[i].type == goalType;
+          slots.add(buildPastille(scored));
+        } else {
+          slots.add(buildEmptySlot());
+        }
+      }
+      return slots;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.sports_score, size: 13, color: Colors.white70),
+              const SizedBox(width: 5),
+              Text(
+                isSuddenDeath ? 'TIRS AU BUT • MORT SUBITE' : 'SÉANCE DE TIRS AU BUT',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              // Noms et mini-logos des équipes
+              SizedBox(
+                width: 105,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 22,
+                      child: Row(
+                        children: [
+                          TeamLogo(
+                            teamName: match.teamAName,
+                            logoUrl: match.teamALogo,
+                            fallbackColor: Colors.greenAccent,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              match.teamAName,
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 22,
+                      child: Row(
+                        children: [
+                          TeamLogo(
+                            teamName: match.teamBName,
+                            logoUrl: match.teamBLogo,
+                            fallbackColor: Colors.green,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              match.teamBName,
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Pastilles horizontales synchronisées
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 22,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: buildTeamSlots(shotsA, 'TIR_AU_BUT_ASC'),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 22,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: buildTeamSlots(shotsB, 'TIR_AU_BUT_ADV'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Total TAB
+              Column(
+                children: [
+                  SizedBox(
+                    height: 22,
+                    child: Center(
+                      child: Text(
+                        '$scoreA',
+                        style: TextStyle(
+                          color: aLeading ? const Color(0xFF00E676) : Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 22,
+                    child: Center(
+                      child: Text(
+                        '$scoreB',
+                        style: TextStyle(
+                          color: bLeading ? const Color(0xFF00E676) : Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  static Widget _buildTeam(String name, Color color, {String? logoUrl, Widget? extra}) {
+  static Widget _buildTeam(String name, Color color, {String? logoUrl}) {
     return Column(
       children: [
         TeamLogo(
@@ -549,10 +752,6 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
           width: 110,
           child: Text(name, style: const TextStyle(color: Colors.white, fontSize: 11), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
         ),
-        if (extra != null) ...[
-          const SizedBox(height: 6),
-          extra,
-        ],
       ],
     );
   }
