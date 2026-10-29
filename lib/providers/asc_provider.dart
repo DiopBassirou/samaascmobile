@@ -5,8 +5,38 @@ import '../services/asc_service.dart';
 class AscProvider with ChangeNotifier {
   final AscService _ascService = AscService();
   bool _isLoading = false;
+  List<Map<String, dynamic>> _ascs = [];
 
   bool get isLoading => _isLoading;
+  List<Map<String, dynamic>> get ascs => _ascs;
+
+  Future<void> fetchSuperAdminAscs() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _ascs = await _ascService.getSuperAdminAscs();
+    } catch (e) {
+      debugPrint('Error fetching superadmin ascs: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Map<String, dynamic>> createSuperAdminAsc(String nom, String zone, {String ville = 'Dakar'}) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final res = await _ascService.createSuperAdminAsc(nom, zone, ville: ville);
+      // Recharger immédiatement la liste partagée de toutes les ASCs
+      await fetchSuperAdminAscs();
+      return res;
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
 
   Future<void> createAsc(String nom, String ville, String zone, XFile? recepisse) async {
     _isLoading = true;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../../../services/asc_service.dart';
+import '../../../providers/asc_provider.dart';
 
 class AscListTab extends StatefulWidget {
   const AscListTab({super.key});
@@ -11,8 +13,7 @@ class AscListTab extends StatefulWidget {
 
 class _AscListTabState extends State<AscListTab> {
   final AscService _ascService = AscService();
-  bool _isLoading = false;
-  List<Map<String, dynamic>> _ascs = [];
+  bool _localLoading = false;
 
   final _nomController = TextEditingController();
   final _zoneController = TextEditingController();
@@ -21,22 +22,19 @@ class _AscListTabState extends State<AscListTab> {
   @override
   void initState() {
     super.initState();
-    _loadAscs();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadAscs();
+    });
   }
 
   Future<void> _loadAscs() async {
-    setState(() => _isLoading = true);
     try {
-      final ascs = await _ascService.getSuperAdminAscs();
-      if (!mounted) return;
-      setState(() => _ascs = ascs);
+      await Provider.of<AscProvider>(context, listen: false).fetchSuperAdminAscs();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur: $e')),
       );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -109,13 +107,12 @@ class _AscListTabState extends State<AscListTab> {
 
                             setModalState(() => isModalLoading = true);
                             try {
-                              await _ascService.createSuperAdminAsc(nom, zone, ville: ville);
+                              await Provider.of<AscProvider>(context, listen: false).createSuperAdminAsc(nom, zone, ville: ville);
                               _nomController.clear();
                               _zoneController.clear();
                               _villeController.text = 'Dakar';
                               if (!mounted) return;
                               Navigator.pop(ctx);
-                              await _loadAscs();
                               if (!mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -156,23 +153,28 @@ class _AscListTabState extends State<AscListTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreateDialog,
-        backgroundColor: const Color(0xFF0A5C36),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Créer ASC', style: TextStyle(color: Colors.white)),
-      ),
-      body: _isLoading && _ascs.isEmpty
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF0A5C36)))
-          : RefreshIndicator(
-              onRefresh: _loadAscs,
-              color: const Color(0xFF0A5C36),
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _ascs.length,
-                itemBuilder: (context, index) {
-                  final asc = _ascs[index];
+    return Consumer<AscProvider>(
+      builder: (context, ascProv, child) {
+        final ascs = ascProv.ascs;
+        final isLoading = _localLoading || (ascProv.isLoading && ascs.isEmpty);
+
+        return Scaffold(
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: _showCreateDialog,
+            backgroundColor: const Color(0xFF0A5C36),
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text('Créer ASC', style: TextStyle(color: Colors.white)),
+          ),
+          body: isLoading && ascs.isEmpty
+              ? const Center(child: CircularProgressIndicator(color: Color(0xFF0A5C36)))
+              : RefreshIndicator(
+                  onRefresh: _loadAscs,
+                  color: const Color(0xFF0A5C36),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: ascs.length,
+                    itemBuilder: (context, index) {
+                      final asc = ascs[index];
                   final hasLogo = asc['logo_path'] != null && asc['logo_path'].toString().isNotEmpty;
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -241,6 +243,8 @@ class _AscListTabState extends State<AscListTab> {
                 },
               ),
             ),
+        );
+      },
     );
   }
 
@@ -438,7 +442,7 @@ class _AscListTabState extends State<AscListTab> {
         SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
       );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _localLoading = false);
     }
   }
 
@@ -495,7 +499,7 @@ class _AscListTabState extends State<AscListTab> {
   }
 
   Future<void> _addPlayer(String codeUnique, String nom, String poste) async {
-    setState(() => _isLoading = true);
+    setState(() => _localLoading = true);
     try {
       await _ascService.addSuperAdminPlayer(codeUnique, nom, poste);
       if (!mounted) return;
@@ -508,7 +512,7 @@ class _AscListTabState extends State<AscListTab> {
         SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
       );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _localLoading = false);
     }
   }
 
@@ -519,7 +523,7 @@ class _AscListTabState extends State<AscListTab> {
 
       if (pickedFile == null) return;
 
-      setState(() => _isLoading = true);
+      setState(() => _localLoading = true);
       await _ascService.uploadAscLogo(codeUnique, pickedFile);
 
       if (!mounted) return;
@@ -534,7 +538,7 @@ class _AscListTabState extends State<AscListTab> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
       );
-      setState(() => _isLoading = false);
+      setState(() => _localLoading = false);
     }
   }
 }

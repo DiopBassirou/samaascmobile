@@ -96,100 +96,265 @@ class _LiveTabState extends State<LiveTab> {
 
                         // --- PHASE TIR AU BUT ---
                         if (match.statut == 'TIR_AU_BUT') ...[
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF1A237E), Color(0xFF283593)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [BoxShadow(color: Colors.indigo.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
-                            ),
-                            child: Column(
-                              children: [
-                                const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.sports_score, color: Colors.amber, size: 24),
-                                    SizedBox(width: 8),
-                                    Text('🎯 SÉANCE DE TIR AU BUT', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                                    SizedBox(width: 8),
-                                    Icon(Icons.sports_score, color: Colors.amber, size: 24),
-                                  ],
+                          Builder(
+                            builder: (context) {
+                              final tabEvents = match.events.where((e) =>
+                                  e.type == 'TIR_AU_BUT_ASC' || e.type == 'RATE_TAB_ASC' ||
+                                  e.type == 'TIR_AU_BUT_ADV' || e.type == 'RATE_TAB_ADV').toList();
+
+                              final bool isTeamATurn;
+                              final bool isTeamBTurn;
+                              if (tabEvents.isEmpty) {
+                                isTeamATurn = true;
+                                isTeamBTurn = true;
+                              } else {
+                                final lastEvent = tabEvents.last;
+                                final lastWasTeamA = lastEvent.type == 'TIR_AU_BUT_ASC' || lastEvent.type == 'RATE_TAB_ASC';
+                                isTeamATurn = !lastWasTeamA;
+                                isTeamBTurn = lastWasTeamA;
+                              }
+
+                              return Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF1A237E), Color(0xFF283593)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [BoxShadow(color: Colors.indigo.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
                                 ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                child: Column(
                                   children: [
-                                    Column(
+                                    const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Text(match.teamAName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                                        const SizedBox(height: 8),
-                                        Text('${match.penaltiesAsc ?? 0}', style: const TextStyle(color: Colors.greenAccent, fontSize: 42, fontWeight: FontWeight.w900)),
+                                        Icon(Icons.sports_score, color: Colors.amber, size: 24),
+                                        SizedBox(width: 8),
+                                        Text('🎯 SÉANCE DE TIR AU BUT', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                        SizedBox(width: 8),
+                                        Icon(Icons.sports_score, color: Colors.amber, size: 24),
                                       ],
                                     ),
-                                    const Text('TAB', style: TextStyle(color: Colors.white54, fontSize: 18, fontWeight: FontWeight.bold)),
-                                    Column(
+                                    const SizedBox(height: 16),
+                                    // Score TAB responsive avec Expanded
+                                    Row(
                                       children: [
-                                        Text(match.teamBName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                                        const SizedBox(height: 8),
-                                        Text('${match.penaltiesAdv ?? 0}', style: const TextStyle(color: Colors.redAccent, fontSize: 42, fontWeight: FontWeight.w900)),
+                                        // Équipe A
+                                        Expanded(
+                                          child: Column(
+                                                children: [
+                                                  Text(
+                                                    match.teamAName,
+                                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text('${match.penaltiesAsc ?? 0}', style: const TextStyle(color: Colors.greenAccent, fontSize: 38, fontWeight: FontWeight.w900)),
+                                                  const SizedBox(height: 6),
+                                                  _tabShotsRow(match.events, 'TIR_AU_BUT_ASC', 'RATE_TAB_ASC'),
+                                                ],
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Text('TAB', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)),
+                                        ),
+                                        // Équipe B
+                                        Expanded(
+                                          child: Column(
+                                                children: [
+                                                  Text(
+                                                    match.teamBName,
+                                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text('${match.penaltiesAdv ?? 0}', style: const TextStyle(color: Colors.redAccent, fontSize: 38, fontWeight: FontWeight.w900)),
+                                                  const SizedBox(height: 6),
+                                                  _tabShotsRow(match.events, 'TIR_AU_BUT_ADV', 'RATE_TAB_ADV'),
+                                                ],
+                                          ),
+                                        ),
                                       ],
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF2E7D32),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(vertical: 14),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                        ),
-                                        icon: const Icon(Icons.sports_score, size: 20),
-                                        label: Text('✅ ${match.teamAName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
-                                        onPressed: () async {
-                                          try {
-                                            await matchProv.addMatchEvent(auth, match.id, 'TIR_AU_BUT_ASC', description: 'Tir au but réussi');
-                                          } catch (e) {
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-                                            }
-                                          }
-                                        },
+                                    const SizedBox(height: 16),
+                                    // Indicateur de tour
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.sports_soccer, size: 14, color: Colors.amber),
+                                          const SizedBox(width: 6),
+                                          Flexible(
+                                            child: Text(
+                                              tabEvents.isEmpty
+                                                  ? '👉 Choisissez quelle équipe tire en premier'
+                                                  : isTeamATurn
+                                                      ? '👉 Au tour de : ${match.teamAName}'
+                                                      : '👉 Au tour de : ${match.teamBName}',
+                                              style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 12),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFFC62828),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(vertical: 14),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    const SizedBox(height: 14),
+                                    // Boutons TAB avec Alternance automatique
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: ElevatedButton.icon(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: isTeamATurn ? const Color(0xFF2E7D32) : Colors.grey[800],
+                                              foregroundColor: Colors.white,
+                                              disabledBackgroundColor: Colors.grey[850],
+                                              disabledForegroundColor: Colors.white30,
+                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            ),
+                                            icon: const Icon(Icons.sports_score, size: 18),
+                                            label: Text('✅ ${match.teamAName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
+                                            onPressed: isTeamATurn ? () async {
+                                              try {
+                                                await matchProv.addMatchEvent(auth, match.id, 'TIR_AU_BUT_ASC', description: 'Tir au but réussi');
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                                }
+                                              }
+                                            } : null,
+                                          ),
                                         ),
-                                        icon: const Icon(Icons.sports_score, size: 20),
-                                        label: Text('✅ ${match.teamBName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
-                                        onPressed: () async {
-                                          try {
-                                            await matchProv.addMatchEvent(auth, match.id, 'TIR_AU_BUT_ADV', description: 'Tir au but réussi');
-                                          } catch (e) {
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-                                            }
-                                          }
-                                        },
-                                      ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: ElevatedButton.icon(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: isTeamBTurn ? const Color(0xFFC62828) : Colors.grey[800],
+                                              foregroundColor: Colors.white,
+                                              disabledBackgroundColor: Colors.grey[850],
+                                              disabledForegroundColor: Colors.white30,
+                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            ),
+                                            icon: const Icon(Icons.sports_score, size: 18),
+                                            label: Text('✅ ${match.teamBName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
+                                            onPressed: isTeamBTurn ? () async {
+                                              try {
+                                                await matchProv.addMatchEvent(auth, match.id, 'TIR_AU_BUT_ADV', description: 'Tir au but réussi');
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                                }
+                                              }
+                                            } : null,
+                                          ),
+                                        ),
+                                      ],
                                     ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: ElevatedButton.icon(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: isTeamATurn ? Colors.grey[700] : Colors.grey[850],
+                                              foregroundColor: Colors.white,
+                                              disabledBackgroundColor: Colors.grey[900],
+                                              disabledForegroundColor: Colors.white24,
+                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            ),
+                                            icon: const Icon(Icons.close, size: 18),
+                                            label: Text('Raté ${match.teamAName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
+                                            onPressed: isTeamATurn ? () async {
+                                              try {
+                                                await matchProv.addMatchEvent(auth, match.id, 'RATE_TAB_ASC', description: 'Tir au but raté');
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                                }
+                                              }
+                                            } : null,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: ElevatedButton.icon(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: isTeamBTurn ? Colors.grey[700] : Colors.grey[850],
+                                              foregroundColor: Colors.white,
+                                              disabledBackgroundColor: Colors.grey[900],
+                                              disabledForegroundColor: Colors.white24,
+                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            ),
+                                            icon: const Icon(Icons.close, size: 18),
+                                            label: Text('Raté ${match.teamBName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
+                                            onPressed: isTeamBTurn ? () async {
+                                              try {
+                                                await matchProv.addMatchEvent(auth, match.id, 'RATE_TAB_ADV', description: 'Tir au but raté');
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                                }
+                                              }
+                                            } : null,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    // Bouton Annuler le dernier tir
+                                    if (tabEvents.isNotEmpty) ...[
+                                      const SizedBox(height: 12),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: OutlinedButton.icon(
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: Colors.orangeAccent,
+                                            side: const BorderSide(color: Colors.orangeAccent),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            padding: const EdgeInsets.symmetric(vertical: 10),
+                                          ),
+                                          icon: const Icon(Icons.undo, size: 16),
+                                          label: const Text('↩️ Annuler le dernier tir', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                          onPressed: () async {
+                                            try {
+                                              await matchProv.undoLastMatchEvent(auth, match.id);
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(content: Text('↩️ Dernier tir annulé'), backgroundColor: Colors.orange),
+                                                );
+                                              }
+                                            } catch (e) {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 10),
                           SizedBox(
@@ -794,6 +959,32 @@ class _LiveTabState extends State<LiveTab> {
     );
   }
 
+  /// Pastilles de la séance de TAB : ✅ réussi (vert) / ❌ raté (rouge), dans l'ordre des tirs.
+  Widget _tabShotsRow(List<dynamic> events, String goalType, String missType) {
+    final shots = events.where((e) => e.type == goalType || e.type == missType).toList();
+    if (shots.isEmpty) {
+      return const Text('—', style: TextStyle(color: Colors.white38, fontSize: 13));
+    }
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 3,
+      runSpacing: 4,
+      children: shots.map<Widget>((e) {
+        final scored = e.type == goalType;
+        return Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: scored ? Colors.greenAccent.withValues(alpha: 0.25) : Colors.redAccent.withValues(alpha: 0.25),
+            shape: BoxShape.circle,
+            border: Border.all(color: scored ? Colors.greenAccent : Colors.redAccent, width: 1.5),
+          ),
+          child: Icon(scored ? Icons.check : Icons.close, size: 12, color: scored ? Colors.greenAccent : Colors.redAccent),
+        );
+      }).toList(),
+    );
+  }
+
   Widget _buildEventsTimeline(MatchGame match, List<MatchEvent> events) {
     if (events.isEmpty) {
       return Padding(
@@ -1072,7 +1263,9 @@ class _MatchSheet extends StatefulWidget {
 class _MatchSheetState extends State<_MatchSheet> {
 
   int? _selectedPouleIndex;
-  int? _selectedTeamId;
+  String? _selectedOpponentKey;
+  List<Map<String, dynamic>> _allAscs = [];
+  bool _isLoadingAscs = false;
   DateTime _matchDate = DateTime.now().add(const Duration(days: 2));
   TimeOfDay _matchTime = const TimeOfDay(hour: 16, minute: 0);
 
@@ -1103,9 +1296,25 @@ class _MatchSheetState extends State<_MatchSheet> {
   @override
   void initState() {
     super.initState();
+    _loadAscs();
     // Fetch poules on open
     if (widget.pouleProv.poules.isEmpty) {
       widget.pouleProv.fetchPoules(widget.auth);
+    }
+  }
+
+  Future<void> _loadAscs() async {
+    setState(() => _isLoadingAscs = true);
+    try {
+      final ascs = await AscService().getValidatedAscs();
+      if (mounted) {
+        setState(() {
+          _allAscs = ascs;
+          _isLoadingAscs = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingAscs = false);
     }
   }
 
@@ -1177,6 +1386,55 @@ class _MatchSheetState extends State<_MatchSheet> {
   Widget _buildCreateMatchTab() {
     // Filter poules by category
     final poules = widget.pouleProv.poules.where((p) => p['categorie'] == _matchCategorie).toList();
+    final currentAscCode = widget.auth.user?['asc_code']?.toString() ?? '';
+    final List<Map<String, dynamic>> allOpponents = [];
+    final Set<String> addedKeys = {};
+
+    // 1. Équipes des poules de cette catégorie
+    for (var p in poules) {
+      if (p['teams'] != null) {
+        for (var t in p['teams']) {
+          final ascCode = t['asc_code']?.toString();
+          if (ascCode != null && ascCode == currentAscCode) continue;
+          final id = t['id'];
+          final key = id != null ? 'poule:$id' : (ascCode != null ? 'asc:$ascCode' : '');
+          if (key.isNotEmpty && !addedKeys.contains(key)) {
+            addedKeys.add(key);
+            allOpponents.add({
+              'key': key,
+              'poule_team_id': id,
+              'asc_code': ascCode,
+              'nom': t['nom_equipe'] ?? 'Équipe',
+              'subtitle': p['nom'] ?? 'Poule',
+            });
+          }
+        }
+      }
+    }
+
+    // 2. Toutes les ASCs validées (y compris hors poule pour Coupe Départementale, etc.)
+    for (var asc in _allAscs) {
+      final code = asc['code_unique']?.toString() ?? '';
+      if (code.isNotEmpty && code != currentAscCode) {
+        final alreadyInList = allOpponents.any((o) => o['asc_code'] == code);
+        if (!alreadyInList) {
+          final key = 'asc:$code';
+          if (!addedKeys.contains(key)) {
+            addedKeys.add(key);
+            final zone = asc['zone'] != null ? 'Zone ${asc['zone']} • Hors poule' : 'Hors poule';
+            allOpponents.add({
+              'key': key,
+              'poule_team_id': null,
+              'asc_code': code,
+              'nom': asc['nom'] ?? 'Équipe',
+              'subtitle': zone,
+            });
+          }
+        }
+      }
+    }
+
+    allOpponents.sort((a, b) => (a['nom'] as String).toLowerCase().compareTo((b['nom'] as String).toLowerCase()));
 
     return SingleChildScrollView(
       padding: EdgeInsets.only(left: 20, right: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
@@ -1195,7 +1453,7 @@ class _MatchSheetState extends State<_MatchSheet> {
                       setState(() {
                         _matchCategorie = 'SENIOR';
                         _selectedPouleIndex = null;
-                        _selectedTeamId = null;
+                        _selectedOpponentKey = null;
                       });
                     }
                   },
@@ -1219,7 +1477,7 @@ class _MatchSheetState extends State<_MatchSheet> {
                       setState(() {
                         _matchCategorie = 'CADET';
                         _selectedPouleIndex = null;
-                        _selectedTeamId = null;
+                        _selectedOpponentKey = null;
                       });
                     }
                   },
@@ -1239,7 +1497,9 @@ class _MatchSheetState extends State<_MatchSheet> {
           ),
           const SizedBox(height: 20),
 
-          if (poules.isEmpty) ...[
+          if (allOpponents.isEmpty && _isLoadingAscs) ...[
+            const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: Color(0xFF0A5C36)))),
+          ] else if (allOpponents.isEmpty) ...[
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(30),
@@ -1247,61 +1507,46 @@ class _MatchSheetState extends State<_MatchSheet> {
                   children: [
                     Icon(Icons.info_outline, size: 48, color: Colors.grey[300]),
                     const SizedBox(height: 12),
-                    Text('Aucune poule $_matchCategorie', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[500])),
+                    Text('Aucune équipe adverse disponible', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[500])),
                     const SizedBox(height: 6),
-                    Text('Demandez à l\'admin de créer une poule.', style: TextStyle(color: Colors.grey[400]), textAlign: TextAlign.center),
+                    Text('Créez des équipes ou des poules pour programmer un match.', style: TextStyle(color: Colors.grey[400]), textAlign: TextAlign.center),
                   ],
                 ),
               ),
             ),
           ] else ...[
-            // Sélection adversaire (Toutes les équipes de la catégorie)
-            Builder(
-              builder: (ctx) {
-                List<Map<String, dynamic>> allTeams = [];
-                for (var p in poules) {
-                  if (p['teams'] != null) {
-                    for (var t in p['teams']) {
-                      if (t['asc_code'] != widget.auth.user?['asc_code']) {
-                        allTeams.add({...t as Map<String, dynamic>, 'poule_nom': p['nom']});
-                      }
-                    }
-                  }
-                }
-                
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Adversaire', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: DropdownButtonFormField<int>(
-                        initialValue: _selectedTeamId,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.shield_outlined, color: Color(0xFF0A5C36)),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          hintText: 'Sélectionner l\'équipe adverse',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
-                        ),
-                        items: allTeams.map((t) {
-                          return DropdownMenuItem<int>(
-                            value: t['id'],
-                            child: Text('${t['nom_equipe']} (${t['poule_nom']})', style: const TextStyle(fontWeight: FontWeight.w600)),
-                          );
-                        }).toList(),
-                        onChanged: (val) => setState(() => _selectedTeamId = val),
-                      ),
+            // Sélection adversaire (Toutes les équipes de la catégorie ou de la plateforme)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Adversaire', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0A5C36))),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedOpponentKey,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.shield_outlined, color: Color(0xFF0A5C36)),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      hintText: 'Sélectionner l\'équipe adverse',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
                     ),
-                  ],
-                );
-              }
+                    items: allOpponents.map((t) {
+                      return DropdownMenuItem<String>(
+                        value: t['key'] as String,
+                        child: Text('${t['nom']} (${t['subtitle']})', style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setState(() => _selectedOpponentKey = val),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
 
@@ -1453,7 +1698,7 @@ class _MatchSheetState extends State<_MatchSheet> {
                   elevation: 4,
                   shadowColor: const Color(0xFF0A5C36).withValues(alpha: 0.4),
                 ),
-                onPressed: _selectedTeamId == null
+                onPressed: _selectedOpponentKey == null
                     ? null
                     : () async {
                         final dt = DateTime(
@@ -1461,11 +1706,19 @@ class _MatchSheetState extends State<_MatchSheet> {
                           _matchTime.hour, _matchTime.minute,
                         );
 
+                        final selectedOpponent = allOpponents.firstWhere(
+                          (o) => o['key'] == _selectedOpponentKey,
+                          orElse: () => {},
+                        );
+                        int? pouleTeamId = selectedOpponent['poule_team_id'];
+                        String? adversaireCode = selectedOpponent['asc_code'];
+
                         try {
                           await widget.matchProv.createMatch(
                             widget.auth,
-                            _selectedTeamId!,
+                            pouleTeamId,
                             dt.toIso8601String(),
+                            adversaireCode: adversaireCode,
                             categorie: _matchCategorie,
                             lieu: _lieuController.text.trim(),
                             phase: _matchPhase,

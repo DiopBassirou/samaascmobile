@@ -255,6 +255,7 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
   Widget _buildMatchCard(MatchGame match, AuthProvider authProvider) {
     final isLive = match.statut == 'EN_COURS' || match.statut == 'MI_TEMPS' || match.statut == 'DEUXIEME_MI_TEMPS' || match.statut == 'TIR_AU_BUT';
     final isNext = match.statut == 'A_VENIR' || match.statut == 'REPORTE';
+    final isTabPhase = match.statut == 'TIR_AU_BUT' || match.penaltiesAsc != null || match.penaltiesAdv != null;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -339,22 +340,32 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildTeam(match.teamAName, Colors.greenAccent, logoUrl: match.teamALogo),
+                    _buildTeam(
+                      match.teamAName,
+                      Colors.greenAccent,
+                      logoUrl: match.teamALogo,
+                      extra: isTabPhase ? _tabShotsRow(match.events, 'TIR_AU_BUT_ASC', 'RATE_TAB_ASC') : null,
+                    ),
                     if (isNext)
                       const Text('VS', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold))
                     else
                       Text(
                         '${match.scoreAsc ?? 0} - ${match.scoreAdv ?? 0}${(match.penaltiesAsc != null || match.penaltiesAdv != null) ? '\n(${match.penaltiesAsc ?? 0} TAB ${match.penaltiesAdv ?? 0})' : ''}',
-                        style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, height: 1.2),
+                        style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold, height: 1.2),
                         textAlign: TextAlign.center,
                       ),
-                    _buildTeam(match.teamBName, Colors.green, logoUrl: match.teamBLogo),
+                    _buildTeam(
+                      match.teamBName,
+                      Colors.green,
+                      logoUrl: match.teamBLogo,
+                      extra: isTabPhase ? _tabShotsRow(match.events, 'TIR_AU_BUT_ADV', 'RATE_TAB_ADV') : null,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
 
-                // Chronomètre (seulement EN_COURS ou MI_TEMPS)
-                if (isLive)
+                // Chronomètre (seulement EN_COURS ou MI_TEMPS, masqué pendant les TAB)
+                if (isLive && match.statut != 'TIR_AU_BUT')
                   MatchTimer(match: match),
 
                 const SizedBox(height: 12),
@@ -498,7 +509,33 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
     );
   }
 
-  static Widget _buildTeam(String name, Color color, {String? logoUrl}) {
+  Widget _tabShotsRow(List<dynamic> events, String goalType, String missType) {
+    final shots = events.where((e) => e.type == goalType || e.type == missType).toList();
+    if (shots.isEmpty) return const SizedBox.shrink();
+    return SizedBox(
+      width: 100,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 3,
+        runSpacing: 3,
+        children: shots.map<Widget>((e) {
+          final scored = e.type == goalType;
+          return Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: scored ? Colors.greenAccent.withValues(alpha: 0.3) : Colors.redAccent.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
+              border: Border.all(color: scored ? Colors.greenAccent : Colors.redAccent, width: 1.2),
+            ),
+            child: Icon(scored ? Icons.check : Icons.close, size: 10, color: scored ? Colors.greenAccent : Colors.redAccent),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  static Widget _buildTeam(String name, Color color, {String? logoUrl, Widget? extra}) {
     return Column(
       children: [
         TeamLogo(
@@ -512,6 +549,10 @@ class _SupporterHomeTabState extends State<SupporterHomeTab> {
           width: 110,
           child: Text(name, style: const TextStyle(color: Colors.white, fontSize: 11), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
         ),
+        if (extra != null) ...[
+          const SizedBox(height: 6),
+          extra,
+        ],
       ],
     );
   }

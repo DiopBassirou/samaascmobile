@@ -154,7 +154,20 @@ class _MainShellState extends State<MainShell> {
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          onTap: (index) {
+            setState(() => _currentIndex = index);
+            final roleLower = roleName.toLowerCase();
+            if (roleLower.contains('admin') || roleLower.contains('super')) {
+              if (index == 2) {
+                // Onglet Matchs : rafraîchir immédiatement les ASCs et Poules pour que les nouvelles équipes créées apparaissent sans redémarrer
+                Provider.of<AscProvider>(context, listen: false).fetchSuperAdminAscs();
+                Provider.of<PouleProvider>(context, listen: false).fetchPoules(authProvider);
+              } else if (index == 1) {
+                // Onglet ASC
+                Provider.of<AscProvider>(context, listen: false).fetchSuperAdminAscs();
+              }
+            }
+          },
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
           selectedItemColor: primaryColor,

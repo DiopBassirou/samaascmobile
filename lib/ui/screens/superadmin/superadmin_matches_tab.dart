@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/poule_provider.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/asc_provider.dart';
 import '../../../services/asc_service.dart';
 import '../../../models/match_model.dart';
 import '../../../providers/match_provider.dart';
@@ -67,7 +68,9 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final pouleProv = Provider.of<PouleProvider>(context, listen: false);
+      final ascProv = Provider.of<AscProvider>(context, listen: false);
       pouleProv.fetchPoules(auth);
+      ascProv.fetchSuperAdminAscs();
     });
     _loadAscs();
     _fetchMatches();
@@ -76,9 +79,16 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
   Future<void> _loadAscs() async {
     setState(() => _isLoadingAscs = true);
     try {
-      final ascs = await _ascService.getSuperAdminAscs();
-      if (mounted) setState(() => _allAscs = ascs);
+      final ascProv = Provider.of<AscProvider>(context, listen: false);
+      await ascProv.fetchSuperAdminAscs();
+      if (mounted && ascProv.ascs.isNotEmpty) {
+        setState(() => _allAscs = ascProv.ascs);
+      }
     } catch (_) {
+      try {
+        final ascs = await _ascService.getSuperAdminAscs();
+        if (mounted) setState(() => _allAscs = ascs);
+      } catch (_) {}
     } finally {
       if (mounted) setState(() => _isLoadingAscs = false);
     }
@@ -98,18 +108,18 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     }
   }
 
-  List<Map<String, dynamic>> _getSelectableTeams(List<Map<String, dynamic>> filteredPoules) {
+  List<Map<String, dynamic>> _getSelectableTeams(List<Map<String, dynamic>> filteredPoules, List<Map<String, dynamic>> currentAscs) {
     final List<Map<String, dynamic>> teams = [];
     final Set<String> addedKeys = {};
 
-    // 1. Ajouter toutes les ASCs enregistrées sur la plateforme (y compris les nouvelles créées)
-    for (var asc in _allAscs) {
+    // 1. Ajouter toutes les ASCs enregistrées sur la plateforme (y compris les nouvelles créées sans poule)
+    for (var asc in currentAscs) {
       final code = asc['code_unique']?.toString() ?? '';
       if (code.isNotEmpty) {
         final key = 'asc:$code';
         addedKeys.add(key);
 
-        String subtitle = asc['zone'] != null ? 'Zone: ${asc['zone']}' : '';
+        String subtitle = '';
         int? pouleTeamId;
         for (var p in filteredPoules) {
           if (p['teams'] != null) {
@@ -125,6 +135,11 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
           if (pouleTeamId != null) break;
         }
 
+        // Si l'équipe ne fait partie d'aucune poule (ex: Coupe Départementale, Coupe Régionale, Amical)
+        if (subtitle.isEmpty) {
+          subtitle = asc['zone'] != null ? 'Zone: ${asc['zone']} • Hors poule' : 'Hors poule';
+        }
+
         teams.add({
           'key': key,
           'asc_code': code,
@@ -136,7 +151,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
       }
     }
 
-    // 2. Ajouter les équipes de poules qui n'étaient pas dans _allAscs
+    // 2. Ajouter les équipes de poules qui n'étaient pas dans currentAscs
     for (var p in filteredPoules) {
       if (p['teams'] != null) {
         for (var t in p['teams']) {
@@ -164,10 +179,11 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<PouleProvider>(
-      builder: (context, pouleProv, _) {
+    return Consumer2<PouleProvider, AscProvider>(
+      builder: (context, pouleProv, ascProv, _) {
+        final currentAscs = ascProv.ascs.isNotEmpty ? ascProv.ascs : _allAscs;
         final filteredPoules = pouleProv.poules.where((p) => p['categorie'] == _categorie).toList();
-        final selectableTeams = _getSelectableTeams(filteredPoules.cast<Map<String, dynamic>>());
+        final selectableTeams = _getSelectableTeams(filteredPoules.cast<Map<String, dynamic>>(), currentAscs);
         
         final displayedMatches = _allMatches.where((m) {
           final isSameCategory = m['categorie'] == _categorie;
@@ -190,7 +206,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
               final auth = Provider.of<AuthProvider>(context, listen: false);
               await Future.wait([
                 pouleProv.fetchPoules(auth),
-                _loadAscs(),
+                ascProv.fetchSuperAdminAscs(),
                 _fetchMatches(),
               ]);
             },
@@ -227,6 +243,7 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
                           onPressed: () {
                             final auth = Provider.of<AuthProvider>(context, listen: false);
                             pouleProv.fetchPoules(auth);
+                            ascProv.fetchSuperAdminAscs();
                             _loadAscs();
                             _fetchMatches();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -1069,8 +1086,10 @@ class _SuperAdminMatchesTabState extends State<SuperAdminMatchesTab> {
     
     // Recuperer toutes les equipes de la meme categorie
     final pouleProv = Provider.of<PouleProvider>(context, listen: false);
+    final ascProv = Provider.of<AscProvider>(context, listen: false);
+    final ascsList = ascProv.ascs.isNotEmpty ? ascProv.ascs : _allAscs;
     final categoryPoules = pouleProv.poules.where((p) => p['categorie'] == match['categorie']).toList();
-    final allTeams = _getSelectableTeams(categoryPoules.cast<Map<String, dynamic>>());
+    final allTeams = _getSelectableTeams(categoryPoules.cast<Map<String, dynamic>>(), ascsList);
     
     String? teamAKey;
     String? teamBKey;

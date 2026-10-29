@@ -19,23 +19,23 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
   Widget _tabShotsRow(List<dynamic> events, String goalType, String missType) {
     final shots = events.where((e) => e.type == goalType || e.type == missType).toList();
     if (shots.isEmpty) {
-      return const Text('—', style: TextStyle(color: Colors.white38, fontSize: 14));
+      return const Text('—', style: TextStyle(color: Colors.white38, fontSize: 13));
     }
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 4,
+      spacing: 3,
       runSpacing: 4,
       children: shots.map<Widget>((e) {
         final scored = e.type == goalType;
         return Container(
-          width: 22,
-          height: 22,
+          width: 20,
+          height: 20,
           decoration: BoxDecoration(
             color: scored ? Colors.greenAccent.withValues(alpha: 0.25) : Colors.redAccent.withValues(alpha: 0.25),
             shape: BoxShape.circle,
             border: Border.all(color: scored ? Colors.greenAccent : Colors.redAccent, width: 1.5),
           ),
-          child: Icon(scored ? Icons.check : Icons.close, size: 14, color: scored ? Colors.greenAccent : Colors.redAccent),
+          child: Icon(scored ? Icons.check : Icons.close, size: 12, color: scored ? Colors.greenAccent : Colors.redAccent),
         );
       }).toList(),
     );
@@ -272,161 +272,269 @@ class _SuperAdminLiveScreenState extends State<SuperAdminLiveScreen> {
                           children: [
                             // --- PHASE TIR AU BUT ---
                             if (updatedMatch.statut == 'TIR_AU_BUT') ...[
-                              // Magnifique interface TAB
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFF1A237E), Color(0xFF283593)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [BoxShadow(color: Colors.indigo.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
-                                ),
-                                child: Column(
-                                  children: [
-                                    const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.sports_score, color: Colors.amber, size: 24),
-                                        SizedBox(width: 8),
-                                        Text('🎯 SÉANCE DE TIR AU BUT', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                                        SizedBox(width: 8),
-                                        Icon(Icons.sports_score, color: Colors.amber, size: 24),
-                                      ],
+                              Builder(
+                                builder: (context) {
+                                  final tabEvents = updatedMatch.events.where((e) =>
+                                      e.type == 'TIR_AU_BUT_ASC' || e.type == 'RATE_TAB_ASC' ||
+                                      e.type == 'TIR_AU_BUT_ADV' || e.type == 'RATE_TAB_ADV').toList();
+
+                                  final bool isTeamATurn;
+                                  final bool isTeamBTurn;
+                                  if (tabEvents.isEmpty) {
+                                    isTeamATurn = true;
+                                    isTeamBTurn = true;
+                                  } else {
+                                    final lastEvent = tabEvents.last;
+                                    final lastWasTeamA = lastEvent.type == 'TIR_AU_BUT_ASC' || lastEvent.type == 'RATE_TAB_ASC';
+                                    isTeamATurn = !lastWasTeamA;
+                                    isTeamBTurn = lastWasTeamA;
+                                  }
+
+                                  return Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF1A237E), Color(0xFF283593)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [BoxShadow(color: Colors.indigo.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
                                     ),
-                                    const SizedBox(height: 16),
-                                    // Score TAB
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    child: Column(
                                       children: [
-                                        // Équipe A
-                                        Column(
+                                        const Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
-                                            Text(updatedMatch.teamAName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                                            const SizedBox(height: 8),
-                                            Text('${updatedMatch.penaltiesAsc ?? 0}', style: const TextStyle(color: Colors.greenAccent, fontSize: 42, fontWeight: FontWeight.w900)),
-                                            const SizedBox(height: 6),
-                                            _tabShotsRow(updatedMatch.events, 'TIR_AU_BUT_ASC', 'RATE_TAB_ASC'),
+                                            Icon(Icons.sports_score, color: Colors.amber, size: 24),
+                                            SizedBox(width: 8),
+                                            Text('🎯 SÉANCE DE TIR AU BUT', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                            SizedBox(width: 8),
+                                            Icon(Icons.sports_score, color: Colors.amber, size: 24),
                                           ],
                                         ),
-                                        const Text('TAB', style: TextStyle(color: Colors.white54, fontSize: 18, fontWeight: FontWeight.bold)),
-                                        // Équipe B
-                                        Column(
+                                        const SizedBox(height: 16),
+                                        // Score TAB responsive avec Expanded
+                                        Row(
                                           children: [
-                                            Text(updatedMatch.teamBName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                                            const SizedBox(height: 8),
-                                            Text('${updatedMatch.penaltiesAdv ?? 0}', style: const TextStyle(color: Colors.redAccent, fontSize: 42, fontWeight: FontWeight.w900)),
-                                            const SizedBox(height: 6),
-                                            _tabShotsRow(updatedMatch.events, 'TIR_AU_BUT_ADV', 'RATE_TAB_ADV'),
+                                            // Équipe A
+                                            Expanded(
+                                              child: Column(
+                                                children: [
+                                                  Text(
+                                                    updatedMatch.teamAName,
+                                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text('${updatedMatch.penaltiesAsc ?? 0}', style: const TextStyle(color: Colors.greenAccent, fontSize: 38, fontWeight: FontWeight.w900)),
+                                                  const SizedBox(height: 6),
+                                                  _tabShotsRow(updatedMatch.events, 'TIR_AU_BUT_ASC', 'RATE_TAB_ASC'),
+                                                ],
+                                              ),
+                                            ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: const Text('TAB', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)),
+                                            ),
+                                            // Équipe B
+                                            Expanded(
+                                              child: Column(
+                                                children: [
+                                                  Text(
+                                                    updatedMatch.teamBName,
+                                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text('${updatedMatch.penaltiesAdv ?? 0}', style: const TextStyle(color: Colors.redAccent, fontSize: 38, fontWeight: FontWeight.w900)),
+                                                  const SizedBox(height: 6),
+                                                  _tabShotsRow(updatedMatch.events, 'TIR_AU_BUT_ADV', 'RATE_TAB_ADV'),
+                                                ],
+                                              ),
+                                            ),
                                           ],
                                         ),
+                                        const SizedBox(height: 16),
+                                        // Indicateur de tour
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.amber.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(20),
+                                            border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.sports_soccer, size: 14, color: Colors.amber),
+                                              const SizedBox(width: 6),
+                                              Flexible(
+                                                child: Text(
+                                                  tabEvents.isEmpty
+                                                      ? '👉 Choisissez quelle équipe tire en premier'
+                                                      : isTeamATurn
+                                                          ? '👉 Au tour de : ${updatedMatch.teamAName}'
+                                                          : '👉 Au tour de : ${updatedMatch.teamBName}',
+                                                  style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 12),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        // Boutons TAB avec Alternance automatique
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: isTeamATurn ? const Color(0xFF2E7D32) : Colors.grey[800],
+                                                  foregroundColor: Colors.white,
+                                                  disabledBackgroundColor: Colors.grey[850],
+                                                  disabledForegroundColor: Colors.white30,
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                ),
+                                                icon: const Icon(Icons.sports_score, size: 18),
+                                                label: Text('✅ ${updatedMatch.teamAName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
+                                                onPressed: isTeamATurn ? () async {
+                                                  try {
+                                                    await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'TIR_AU_BUT_ASC', description: 'Tir au but réussi');
+                                                    if (context.mounted) _tabFeedback(context, true, updatedMatch.teamAName);
+                                                  } catch (e) {
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                                    }
+                                                  }
+                                                } : null,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: isTeamBTurn ? const Color(0xFFC62828) : Colors.grey[800],
+                                                  foregroundColor: Colors.white,
+                                                  disabledBackgroundColor: Colors.grey[850],
+                                                  disabledForegroundColor: Colors.white30,
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                ),
+                                                icon: const Icon(Icons.sports_score, size: 18),
+                                                label: Text('✅ ${updatedMatch.teamBName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
+                                                onPressed: isTeamBTurn ? () async {
+                                                  try {
+                                                    await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'TIR_AU_BUT_ADV', description: 'Tir au but réussi');
+                                                    if (context.mounted) _tabFeedback(context, true, updatedMatch.teamBName);
+                                                  } catch (e) {
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                                    }
+                                                  }
+                                                } : null,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: isTeamATurn ? Colors.grey[700] : Colors.grey[850],
+                                                  foregroundColor: Colors.white,
+                                                  disabledBackgroundColor: Colors.grey[900],
+                                                  disabledForegroundColor: Colors.white24,
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                ),
+                                                icon: const Icon(Icons.close, size: 18),
+                                                label: Text('Raté ${updatedMatch.teamAName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
+                                                onPressed: isTeamATurn ? () async {
+                                                  try {
+                                                    await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'RATE_TAB_ASC', description: 'Tir au but raté');
+                                                    if (context.mounted) _tabFeedback(context, false, updatedMatch.teamAName);
+                                                  } catch (e) {
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                                    }
+                                                  }
+                                                } : null,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: isTeamBTurn ? Colors.grey[700] : Colors.grey[850],
+                                                  foregroundColor: Colors.white,
+                                                  disabledBackgroundColor: Colors.grey[900],
+                                                  disabledForegroundColor: Colors.white24,
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                ),
+                                                icon: const Icon(Icons.close, size: 18),
+                                                label: Text('Raté ${updatedMatch.teamBName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
+                                                onPressed: isTeamBTurn ? () async {
+                                                  try {
+                                                    await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'RATE_TAB_ADV', description: 'Tir au but raté');
+                                                    if (context.mounted) _tabFeedback(context, false, updatedMatch.teamBName);
+                                                  } catch (e) {
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                                    }
+                                                  }
+                                                } : null,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        // Bouton Annuler le dernier tir
+                                        if (tabEvents.isNotEmpty) ...[
+                                          const SizedBox(height: 12),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton.icon(
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: Colors.orangeAccent,
+                                                side: const BorderSide(color: Colors.orangeAccent),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                              ),
+                                              icon: const Icon(Icons.undo, size: 16),
+                                              label: const Text('↩️ Annuler le dernier tir', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                              onPressed: () async {
+                                                try {
+                                                  await matchProv.superAdminUndoLastEvent(auth, updatedMatch.id);
+                                                  if (context.mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(content: Text('↩️ Dernier tir annulé'), backgroundColor: Colors.orange),
+                                                    );
+                                                  }
+                                                } catch (e) {
+                                                  if (context.mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                                                  }
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
-                                    const SizedBox(height: 16),
-                                    // Boutons TAB
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: ElevatedButton.icon(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(0xFF2E7D32),
-                                              foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(vertical: 14),
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                            ),
-                                            icon: const Icon(Icons.sports_score, size: 20),
-                                            label: Text('✅ ${updatedMatch.teamAName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
-                                            onPressed: () async {
-                                              try {
-                                                await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'TIR_AU_BUT_ASC', description: 'Tir au but réussi');
-                                                if (context.mounted) _tabFeedback(context, true, updatedMatch.teamAName);
-                                              } catch (e) {
-                                                if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-                                                }
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: ElevatedButton.icon(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(0xFFC62828),
-                                              foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(vertical: 14),
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                            ),
-                                            icon: const Icon(Icons.sports_score, size: 20),
-                                            label: Text('✅ ${updatedMatch.teamBName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
-                                            onPressed: () async {
-                                              try {
-                                                await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'TIR_AU_BUT_ADV', description: 'Tir au but réussi');
-                                                if (context.mounted) _tabFeedback(context, true, updatedMatch.teamBName);
-                                              } catch (e) {
-                                                if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-                                                }
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: ElevatedButton.icon(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.grey[700],
-                                              foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(vertical: 14),
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                            ),
-                                            icon: const Icon(Icons.close, size: 20),
-                                            label: Text('Raté ${updatedMatch.teamAName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
-                                            onPressed: () async {
-                                              try {
-                                                await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'RATE_TAB_ASC', description: 'Tir au but raté');
-                                                if (context.mounted) _tabFeedback(context, false, updatedMatch.teamAName);
-                                              } catch (e) {
-                                                if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-                                                }
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: ElevatedButton.icon(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.grey[700],
-                                              foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(vertical: 14),
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                            ),
-                                            icon: const Icon(Icons.close, size: 20),
-                                            label: Text('Raté ${updatedMatch.teamBName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
-                                            onPressed: () async {
-                                              try {
-                                                await matchProv.superAdminAddEvent(auth, updatedMatch.id, 'RATE_TAB_ADV', description: 'Tir au but raté');
-                                                if (context.mounted) _tabFeedback(context, false, updatedMatch.teamBName);
-                                              } catch (e) {
-                                                if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-                                                }
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                  );
+                                },
                               ),
                               const SizedBox(height: 12),
                               // Bouton Terminer le Match (après les TAB)

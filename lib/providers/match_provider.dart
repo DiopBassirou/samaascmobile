@@ -103,7 +103,8 @@ class MatchProvider with ChangeNotifier {
     }
   }
 
-  Future<void> createMatch(AuthProvider authProvider, int pouleTeamId, String dateMatch, {
+  Future<void> createMatch(AuthProvider authProvider, int? pouleTeamId, String dateMatch, {
+    String? adversaireCode,
     String categorie = 'SENIOR',
     String lieu = '',
     String phase = 'Phase de Groupes',
@@ -122,7 +123,8 @@ class MatchProvider with ChangeNotifier {
           'Accept': 'application/json',
         },
         body: json.encode({
-          'poule_team_id': pouleTeamId,
+          if (pouleTeamId != null) 'poule_team_id': pouleTeamId,
+          if (adversaireCode != null) 'adversaire_code': adversaireCode,
           'date_match': dateMatch,
           'categorie': categorie,
           if (lieu.isNotEmpty) 'lieu': lieu,
@@ -278,6 +280,66 @@ class MatchProvider with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error adding match event (Super Admin): $e');
+      rethrow;
+    }
+  }
+
+  Future<void> superAdminUndoLastEvent(AuthProvider authProvider, int matchId) async {
+    final token = authProvider.token;
+    if (token == null) return;
+
+    try {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://127.0.0.1:8000/api';
+      final response = await http.delete(
+        Uri.parse('$apiUrl/superadmin/matches/$matchId/events/last'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final updatedData = json.decode(utf8.decode(response.bodyBytes));
+        final updatedMatch = MatchGame.fromJson(updatedData);
+        final index = _matches.indexWhere((m) => m.id == matchId);
+        if (index != -1) {
+          _matches[index] = updatedMatch;
+        }
+        notifyListeners();
+      } else {
+        debugPrint('Error undoing event (Super Admin): ${response.statusCode} ${response.body}');
+        throw Exception('Erreur serveur : ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Error undoing match event (Super Admin): $e');
+      rethrow;
+    }
+  }
+
+  Future<void> undoLastMatchEvent(AuthProvider authProvider, int matchId) async {
+    final token = authProvider.token;
+    if (token == null) return;
+
+    try {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://127.0.0.1:8000/api';
+      final response = await http.delete(
+        Uri.parse('$apiUrl/matches/$matchId/events/last'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await fetchMatches(authProvider);
+      } else {
+        debugPrint('Error undoing event: ${response.statusCode} ${response.body}');
+        throw Exception('Erreur serveur : ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Error undoing match event: $e');
       rethrow;
     }
   }
